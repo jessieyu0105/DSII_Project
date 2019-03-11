@@ -24,7 +24,7 @@ A Predictive Model for Life Expentancy using Community Health Status Indicators 
 
 ## Motivation
 
-To 
+To build predictive models for average life expectancy, and isolate the best possible option. Average life expectancy, a general health measure stating average lifespan for a given area, 
 
 
 ## Anticipated Data Source

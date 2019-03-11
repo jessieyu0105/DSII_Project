@@ -1,0 +1,18 @@
+---
+title: "Proposal"
+date: 2019-03-11
+author: "Group 8"
+output: github_document
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+```
+
+# Group Members
+
+```{r, echo = F}
+tibble(Name = c('Noah T. Kreski', 'Shuwei Liu', 'Jie Yu'),
+       Uni = c('ntk2109', 'sl4471', 'jy2944')) %>% 
+  knitr::kable()
+```

@@ -20,7 +20,9 @@ A Predictive Model for Life Expentancy using Community Health Status Indicators 
 Motivation
 ----------
 
-To
+Average life expectancy is a general health measure stating average lifespan for a given area,
+
+To build predictive models for average life expectancy, and isolate the best possible option.
 
 Anticipated Data Source
 -----------------------
@@ -33,6 +35,20 @@ Response(s) and predictors
 Planned analyses
 ----------------
 
--   Data exploration: descriptive and visualization
+1.  Data exploration: descriptive and visualization
 
--
+2.  Variable reduction using Principle Component Analysis
+
+3.  Model building
+
+-   Odinary Least Squares model: using stepwise regression / best subsets regression
+
+-   Ridge regression
+
+-   Lasso
+
+-   Principal components regression (PCR)
+
+-   Partial least squares (PLS) regression
+
+1.  Use k-folds Cross Validation to determine the best model

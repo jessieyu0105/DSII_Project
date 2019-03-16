@@ -45,13 +45,62 @@ ages”, improving lifespan is an urgent and necessary goal.
 ## Anticipated Data Source
 [Community Health Status Indicators (CHSI) to Combat Obesity, Heart Disease and Cancer, from Centers for Disease Control and Prevention](https://healthdata.gov/dataset/community-health-status-indicators-chsi-combat-obesity-heart-disease-and-cancer)
 
+_Short Description:_
+
+Community Health Status Indicators (CHSI) to combat obesity, heart disease, and cancer are major components of the Community Health Data Initiative. This dataset, which contains over 200 measures for each of the 3,141 United States counties, provides key health indicators for local communities and encourages dialogue about actions that can be taken to improve community health (e.g., obesity, heart disease, cancer).
 
 ## Response(s) and predictors
 
+Outcome: 
+
+ALE (average life expectancy)
 
 
+Predictors: 
 
+CHSI_County_Name
 
+CHSI_State_Abbr
+
+Population_Size
+
+Population_Density
+
+Poverty
+
+All_Death
+
+Health_Status
+
+Unhealthy_Days
+
+No_Exercise
+
+Few_Fruit_Veg
+
+Obesity
+
+High_Blood_Pres
+
+Smoker
+
+Diabetes
+
+Uninsured
+
+Elderly_Medicare
+
+Disabled_Medicare
+
+Prim_Care_Phys_Rate
+
+Dentist_Rate
+
+Community_Health_Center_Ind
+
+HPSA_Ind
+
+Categorized data for different diseases
 
 ## Planned analyses
 

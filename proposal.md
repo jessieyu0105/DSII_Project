@@ -52,49 +52,51 @@ Outcome:
 
 ALE (average life expectancy)
 
+Identifiers:
+
+CHSI\_County\_Name (Name of County)
+
+CHSI\_State\_Abbr (Two-character postal abbreviation)
+
 Predictors:
 
-CHSI\_County\_Name
+Population\_Size (County Population Size)
 
-CHSI\_State\_Abbr
+Population\_Density (People per square mile)
 
-Population\_Size
+Poverty (Percent of people living below the poverty line)
 
-Population\_Density
+All\_Death (Mortality rate per 100,000 from all causes)
 
-Poverty
+Health\_Status (Percent of population self-rating health as poor or fair)
 
-All\_Death
+Unhealthy\_Days (Average number of unhealthy days a person had in the past month)
 
-Health\_Status
+No\_Exercise (The percentage of adults reporting of no participation in any leisure-time physical activities or exercises in the past month)
 
-Unhealthy\_Days
+Few\_Fruit\_Veg (The percentage of adults reporting an average fruit and vegetable consumption of less than 5 servings per day)
 
-No\_Exercise
+Obesity (Percentage with a BMI &gt;= 30.0)
 
-Few\_Fruit\_Veg
+High\_Blood\_Pres (The percentage of adults who responded yes to the question, “Have you ever been told by a doctor, nurse, or other health professional that you have high blood pressure?”)
 
-Obesity
+Smoker (The percentage of adults who responded “yes” to the question, “Do you smoke cigarettes now?”)
 
-High\_Blood\_Pres
+Diabetes (the percentage of adults who responded “yes” to the question, “Have you ever been told by a doctor that you have diabetes?”)
 
-Smoker
+Uninsured (The number of uninsured individuals in a county)
 
-Diabetes
+Elderly\_Medicare (Number of those aged 65+ on Medicare)
 
-Uninsured
+Disabled\_Medicare (Number of those with disabilities on Medicare)
 
-Elderly\_Medicare
+Prim\_Care\_Phys\_Rate (Total active, non-federal physicians per 100,000)
 
-Disabled\_Medicare
+Dentist\_Rate (Total active dentists per 100,000 people)
 
-Prim\_Care\_Phys\_Rate
+Community\_Health\_Center\_Ind (Indicates the presence of a health center for low-income and uninsured families with funding from HRSA)
 
-Dentist\_Rate
-
-Community\_Health\_Center\_Ind
-
-HPSA\_Ind
+HPSA\_Ind (Indicates that a county has a shortage of health professionals as determined by the department of HHS)
 
 Categorized data for different diseases
 

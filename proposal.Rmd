@@ -56,59 +56,61 @@ Outcome:
 ALE (average life expectancy)
 
 
+Identifiers:
+
+CHSI_County_Name (Name of County)
+
+CHSI_State_Abbr (Two-character postal abbreviation)
+
 Predictors: 
 
-CHSI_County_Name
+Population_Size (County Population Size)
 
-CHSI_State_Abbr
+Population_Density (People per square mile)
 
-Population_Size
+Poverty (Percent of people living below the poverty line)
 
-Population_Density
+All_Death (Mortality rate per 100,000 from all causes)
 
-Poverty
+Health_Status (Percent of population self-rating health as poor or fair)
 
-All_Death
+Unhealthy_Days (Average number of unhealthy days a person had in the past month)
 
-Health_Status
+No_Exercise (The percentage of adults reporting of no participation in any leisure-time physical activities or exercises in the past month)
 
-Unhealthy_Days
+Few_Fruit_Veg (The percentage of adults reporting an average fruit and vegetable consumption of less than 5 servings per day)
 
-No_Exercise
+Obesity (Percentage with a BMI >= 30.0)
 
-Few_Fruit_Veg
+High_Blood_Pres (The percentage of adults who responded yes to the question, “Have you ever been told by a doctor, nurse, or other health professional that you have high blood pressure?”)
 
-Obesity
+Smoker (The percentage of adults who responded “yes” to the question, “Do you smoke cigarettes now?”)
 
-High_Blood_Pres
+Diabetes (the percentage of adults who responded “yes” to the question, “Have you ever been told by a doctor that you have diabetes?”)
 
-Smoker
+Uninsured (The number of uninsured individuals in a county)
 
-Diabetes
+Elderly_Medicare (Number of those aged 65+ on Medicare)
 
-Uninsured
+Disabled_Medicare (Number of those with disabilities on Medicare)
 
-Elderly_Medicare
+Prim_Care_Phys_Rate (Total active, non-federal physicians per 100,000)
 
-Disabled_Medicare
+Dentist_Rate (Total active dentists per 100,000 people)
 
-Prim_Care_Phys_Rate
+Community_Health_Center_Ind (Indicates the presence of a health center for low-income and uninsured families with funding from HRSA)
 
-Dentist_Rate
-
-Community_Health_Center_Ind
-
-HPSA_Ind
+HPSA_Ind (Indicates that a county has a shortage of health professionals as determined by the department of HHS)
 
 Categorized data for different diseases
 
 ## Planned analyses
 
-1. Data exploration: descriptive and visualization
+1) Data exploration: descriptive and visualization
 
-2. Variable reduction using Principle Component Analysis
+2) Variable reduction using Principle Component Analysis
 
-3. Model building
+3) Model building
 
 * Odinary Least Squares model: using stepwise regression / best subsets regression
 
@@ -120,4 +122,4 @@ Categorized data for different diseases
 
 * Partial least squares (PLS) regression
 
-4. Use k-folds Cross Validation to determine the best model
+4) Use k-folds Cross Validation to determine the best model

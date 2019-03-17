@@ -20,94 +20,110 @@ A Predictive Model for Life Expentancy using Community Health Status Indicators 
 Motivation
 ----------
 
-Average life expectancy is a general health measure stating average lifespan for a given area,
+Average life expectancy is a general health measure stating average lifespan for a given area, and so our goal is to build a model that 'best' predicts life expectancy per county in the United States.
 
-and so our goal is to build predictive models for average life expectancy, and isolate the
+Life expectancy in the United States has been declining recently, and as a key indicator for the Sustainable Development Goal to “Ensure healthy lives and promote well-being for all at all ages”, improving lifespan is an urgent and necessary goal.
 
-best possible option.
+*Reference*:
 
-Life expectancy in the United States has been declining recently, and as a key indicator for
-
-the Sustainable Development Goal to “Ensure healthy lives and promote well-being for all at all
-
-ages”, improving lifespan is an urgent and necessary goal.
-
-[SDG's utilization of life expectancy](https://www.who.int/gho/publications/world_health_statistics/2016/EN_WHS2016_Chapter3.pdf)
+[Sustainable Development Goal's utilization of life expectancy](https://www.who.int/gho/publications/world_health_statistics/2016/EN_WHS2016_Chapter3.pdf)
 
 [U.S. life expectancy in decline for the second year in a row](https://www.aafp.org/news/health-of-the-public/20181210lifeexpectdrop.html)
 
 Anticipated Data Source
 -----------------------
 
-[Community Health Status Indicators (CHSI) to Combat Obesity, Heart Disease and Cancer, from Centers for Disease Control and Prevention](https://healthdata.gov/dataset/community-health-status-indicators-chsi-combat-obesity-heart-disease-and-cancer)
+Data: [Community Health Status Indicators (CHSI) to Combat Obesity, Heart Disease and Cancer, from Centers for Disease Control and Prevention](https://healthdata.gov/dataset/community-health-status-indicators-chsi-combat-obesity-heart-disease-and-cancer)
 
 *Short Description:*
 
 Community Health Status Indicators (CHSI) to combat obesity, heart disease, and cancer are major components of the Community Health Data Initiative. This dataset, which contains over 200 measures for each of the 3,141 United States counties, provides key health indicators for local communities and encourages dialogue about actions that can be taken to improve community health (e.g., obesity, heart disease, cancer).
 
-Response(s) and predictors
---------------------------
+Response and predictors
+-----------------------
 
-Outcome:
+**Response variable**:
 
-ALE (average life expectancy)
+-   `ALE`: Average life expectancy on county level
 
-Identifiers:
+**Identifiers**:
 
-CHSI\_County\_Name (Name of County)
+-   `CHSI_County_Name`: Name of county
 
-CHSI\_State\_Abbr (Two-character postal abbreviation)
+-   `CHSI_State_Abbr`: Two-character postal abbreviation
 
-Predictors:
+**Possible Predictors (on county level)**
 
-Population\_Size (County Population Size)
+*1) Demographic Information*:
 
-Population\_Density (People per square mile)
+-   `Population_Size`: County population size
 
-Poverty (Percent of people living below the poverty line)
+-   `Population_Density`: People per square mile
 
-All\_Death (Mortality rate per 100,000 from all causes)
+-   `Poverty`: Percent of people living below the poverty line
 
-Health\_Status (Percent of population self-rating health as poor or fair)
+-   Population by Age (`Age_19_Under`, `Age_19_64`, `Age_65_84`, `Age_85_and_Over`): Age-specific population sizes
 
-Unhealthy\_Days (Average number of unhealthy days a person had in the past month)
+-   Population by Race/Ethnicity (`White`, `Black`, `Native_American`, `Asian`, `Hispanic`): Race- and ethnicity-specific population sizes
 
-No\_Exercise (The percentage of adults reporting of no participation in any leisure-time physical activities or exercises in the past month)
+*2) Summary Measures of Health*:
 
-Few\_Fruit\_Veg (The percentage of adults reporting an average fruit and vegetable consumption of less than 5 servings per day)
+-   `All_Death`: Mortality rate per 100,000 from all causes of death
 
-Obesity (Percentage with a BMI &gt;= 30.0)
+-   `Health_Status`: Percent of population self-rating health as poor or fair
 
-High\_Blood\_Pres (The percentage of adults who responded yes to the question, “Have you ever been told by a doctor, nurse, or other health professional that you have high blood pressure?”)
+-   `Unhealthy_Days`: Average number of unhealthy days a person had in the past month
 
-Smoker (The percentage of adults who responded “yes” to the question, “Do you smoke cigarettes now?”)
+*3) Risk Factors / Lifestyle Choices*:
 
-Diabetes (the percentage of adults who responded “yes” to the question, “Have you ever been told by a doctor that you have diabetes?”)
+-   `No_Exercise`: the percentage of adults reporting of no participation in any leisure-time physical activities or exercises in the past month
 
-Uninsured (The number of uninsured individuals in a county)
+-   `Few_Fruit_Veg`: the percentage of adults reporting an average fruit and vegetable consumption of less than 5 servings per day
 
-Elderly\_Medicare (Number of those aged 65+ on Medicare)
+-   `Obesity`: Percentage with a BMI &gt;= 30.0
 
-Disabled\_Medicare (Number of those with disabilities on Medicare)
+-   `High_Blood_Pres`:the percentage of adults who responded yes to the question, “Have you ever been told by a doctor, nurse, or other health professional that you have high blood pressure?”)
 
-Prim\_Care\_Phys\_Rate (Total active, non-federal physicians per 100,000)
+-   `Smoker`: the percentage of adults who responded “yes” to the question, “Do you smoke cigarettes now?”
 
-Dentist\_Rate (Total active dentists per 100,000 people)
+-   `Diabetes`: the percentage of adults who responded “yes” to the question, “Have you ever been told by a doctor that you have diabetes?”
 
-Community\_Health\_Center\_Ind (Indicates the presence of a health center for low-income and uninsured families with funding from HRSA)
+*4) Access to Care*:
 
-HPSA\_Ind (Indicates that a county has a shortage of health professionals as determined by the department of HHS)
+-   `Uninsured`: The number of uninsured individuals in a county
 
-Categorized data for different diseases
+-   `Elderly_Medicare`: Number of those aged 65+ on Medicare
+
+-   `Disabled_Medicare`: Number of those with disabilities on Medicare
+
+-   `Prim_Care_Phys_Rate`: Total active, non-federal physicians per 100,000)
+
+-   `Dentist_Rate`: Total active dentists per 100,000 people
+
+-   `Community_Health_Center_Ind`: Indicates the presence of a health center for low-income and uninsured families with funding from HRSA
+
+-   `HPSA_Ind`: Indicates that a county has a shortage of health professionals as determined by the department of HHS
+
+*5) Vulnerable Populations*:
+
+-   `No_HS_Diploma`: The number of individuals aged 25 years and older who have not graduated from high school
+
+-   `Unemployed`: The number of persons who had no employment
+
+-   `Sev_Work_Disabled`: The number of individuals who are severely work disabled
+
+-   `Major_Depression`: The number of individuals aged 18 years and older experiencing a major depressive episode during the past year
+
+-   `Recent_Drug_Use`: The number of individuals aged 12 years and older using illicit drugs within the past month
 
 Planned analyses
 ----------------
 
-1.  Data exploration: descriptive and visualization
+1.Data exploration: descriptive and visualization
 
-2.  Variable reduction using Principle Component Analysis
+2.Variable reduction: using Principle Component Analysis (PCA)
 
-3.  Model building
+3.Model building
 
 -   Odinary Least Squares model: using stepwise regression / best subsets regression
 
@@ -119,4 +135,4 @@ Planned analyses
 
 -   Partial least squares (PLS) regression
 
-1.  Use k-folds Cross Validation to determine the best model
+4.Determine the best predictive model: use k-folds Cross Validation to check the predictability of our models; made density plots to compare the distributions of testing RMSE for all models, and select the best predictive model

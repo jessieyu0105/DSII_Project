@@ -79,3 +79,13 @@ write.csv(data, file = "./data/data.csv")
 ```
 
 
+```{r}
+library(corrplot)
+
+data_1 = 
+  data %>% 
+  select(-county_name, -state_abbr)
+x = model.matrix(ale ~., data_1)[,-1]
+corrplot(cor(x))
+```
+

@@ -135,4 +135,10 @@ Planned analyses
 
 -   Partial least squares (PLS) regression
 
+-   GAM
+
+-   KNN
+
+-   MARS
+
 4.Determine the best predictive model: use k-folds Cross Validation to check the predictability of our models; made density plots to compare the distributions of testing RMSE for all models, and select the best predictive model

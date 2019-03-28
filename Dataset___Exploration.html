@@ -311,9 +311,11 @@ skimr::skim(data)
 ##      5.7   6.6   12.6 ▂▁▁▁▁▁▁▇
 ##     94.1  97.6  100   ▁▁▁▁▁▁▂▇</code></pre>
 <pre class="r"><code>write.csv(data, file = &quot;./data/data.csv&quot;)</code></pre>
-<pre class="r"><code>library(corrplot)
-
-data_1 = 
+</div>
+<div id="correlation-plot" class="section level3">
+<h3>Correlation plot</h3>
+<pre class="r"><code>library(corrplot)</code></pre>
+<pre class="r"><code>data_1 = 
   data %&gt;% 
   select(-county_name, -state_abbr)
 x = model.matrix(ale ~., data_1)[,-1]

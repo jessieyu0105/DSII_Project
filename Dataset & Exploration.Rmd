@@ -78,10 +78,13 @@ skimr::skim(data)
 write.csv(data, file = "./data/data.csv")
 ```
 
+### Correlation plot
 
 ```{r}
 library(corrplot)
+```
 
+```{r}
 data_1 = 
   data %>% 
   select(-county_name, -state_abbr)

@@ -264,4 +264,65 @@ dataset = dataset %>%
          )
 ```
 
-Here I have dropped some age variables and race variables. We need to decide which to keep among `population_size`, `major_depression`, `recent_drug_use`, `uninsured`, `elderly_medicare`, `disabled_medicare`, `no_hs_disloma`, `unemployed`.
+Here I have dropped some age variables and race variables. We need to decide which to keep among `population_size`, `major_depression`, `recent_drug_use`, `uninsured`, `elderly_medicare`, `disabled_medicare`, `no_hs_diploma`, `unemployed`.
+
+Divide by population_size:
+
+```{r}
+dataset.try2 = dataset %>% 
+  mutate(
+    major_depression2 = major_depression / population_size,
+    recent_drug_use2 = recent_drug_use / population_size,
+    uninsured2 = uninsured / population_size,
+    elderly_medicare2 = elderly_medicare / population_size,
+    disabled_medicare2 = disabled_medicare / population_size,
+    no_hs_diploma2 = no_hs_diploma / population_size,
+    unemployed2 =  unemployed / population_size,
+    sev_work_disabled2 = sev_work_disabled / population_size
+    ) %>% 
+  select(-c(major_depression, recent_drug_use, uninsured, elderly_medicare, disabled_medicare, no_hs_diploma, unemployed, sev_work_disabled))
+```
+
+check correlation again:
+
+```{r fig.width = 12, fig.height = 12}
+dataset.try2_1 = dataset.try2 %>% 
+  select(-county_name, -state_abbr)
+
+x = model.matrix(ale ~., dataset.try2_1)[,-1]
+corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
+```
+
+Great! Successfully eliminate most of the correlation!
+
+Just `unemployed2` and `uninsured2` are highly correlated. We check the PCA plot again:
+
+```{r fig.width = 10}
+dataset.try2.pca <- dataset.try2 %>% 
+  select(-county_name, -state_abbr, -ale) %>%
+  scale() %>%
+  as.data.frame() %>%
+  prcomp()
+
+name.vec <- dataset.try2 %>% 
+  select(-county_name, -state_abbr, -ale) %>% 
+  names()
+
+pca.viz1 <- fviz_pca_var(dataset.try2.pca,
+             col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(name = name.vec[1:18]))
+
+pca.viz2 <- fviz_pca_var(dataset.try2.pca,
+             col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(name = name.vec[19:35]))
+
+pca.viz1 + pca.viz2
+```
+
+Magnitude are very close.
+
+Need to decide which to drop from `unemployed2` and `uninsured2`.

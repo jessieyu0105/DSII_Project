@@ -234,9 +234,6 @@ dataset.pca <- dataset %>%
   as.data.frame() %>%
   prcomp()
 
-
-#str(cancer.pca)
-
 name.vec <- dataset %>% select(-county_name, -state_abbr, -ale) %>% names()
 
 pca.viz1 <- fviz_pca_var(dataset.pca,

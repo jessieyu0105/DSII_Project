@@ -204,7 +204,7 @@ dataset = cbind(no_NA_dataset, normal_dataset, skew_dataset)
 
 ### Correlation plot
 
-```{r}
+```{r fig.width = 12, fig.height = 12}
 library(corrplot)
 
 dataset_1 = dataset %>% 
@@ -212,7 +212,59 @@ dataset_1 = dataset %>%
 
 x = model.matrix(ale ~., dataset_1)[,-1]
 corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
-
-cor(dataset_1)
 ```
 
+Highly pairwise correlated:
+
+* `population_size`, `major_depression`, `recent_drug_use`, `uninsured`, `elderly_medicare`, `disabled_medicare`, `no_hs_disloma`, `unemployed`
+
+* `white`, `black`
+
+* `age_85_and_over`, `age_19_64`
+
+## PCA Analysis for Variable Selection
+
+```{r fig.width = 10}
+library(factoextra)
+library(patchwork)
+#Scale and perform pca (take out non-continuous vars & response)
+dataset.pca <- dataset %>% 
+  select(-county_name, -state_abbr, -ale) %>%
+  scale() %>%
+  as.data.frame() %>%
+  prcomp()
+
+
+#str(cancer.pca)
+
+name.vec <- dataset %>% select(-county_name, -state_abbr, -ale) %>% names()
+
+pca.viz1 <- fviz_pca_var(dataset.pca,
+             col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(name = name.vec[1:18]))
+
+pca.viz2 <- fviz_pca_var(dataset.pca,
+             col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(name = name.vec[19:35]))
+
+pca.viz1 + pca.viz2
+```
+
+* `population_size`, `major_depression`, `recent_drug_use`, `uninsured`, `elderly_medicare`, `disabled_medicare`, `no_hs_disloma`, `unemployed` are all explaining the same type and proportion of variability, should only use one 
+
+* Group of age variables: I want to drop `age_19_64` and `age_65_84` because of low magnitude. `age_85_and_over` and `age_19_under` highly negatively correlated and show similar magnitude. I want to choose `age_85_and_over` because the percentage of elderly people might contribute more to our study of life expentancy
+
+* Group of race variables: `white` and `black` are highly nagetively correlated according to our correlation plot. Since other race variables are not strong explanotary variable (by magnitude), I want to just keep `white`
+
+```{r}
+dataset = dataset %>% 
+  select(-c(age_19_64, age_65_84, age_19_under), 
+         -c(hispanic, native_american, asian, black)
+         )
+```
+
+Here I have dropped some age variables and race variables. We need to decide which to keep among `population_size`, `major_depression`, `recent_drug_use`, `uninsured`, `elderly_medicare`, `disabled_medicare`, `no_hs_disloma`, `unemployed`.

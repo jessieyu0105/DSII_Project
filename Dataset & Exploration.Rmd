@@ -326,3 +326,15 @@ pca.viz1 + pca.viz2
 Magnitude are very close.
 
 Need to decide which to drop from `unemployed2` and `uninsured2`.
+
+Let's keep `uninsured2` because that’s the more directly health-related variable.
+
+Final Dataset: `dataset.final`
+
+```{r}
+dataset.final = dataset.try2 %>% 
+  select(-unemployed2)
+
+names(dataset.final)
+```
+

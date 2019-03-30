@@ -78,17 +78,141 @@ skimr::skim(data)
 write.csv(data, file = "./data/data.csv")
 ```
 
+
+### Deal with Missing Data
+
+```{r}
+data.try = data
+
+# List of missing value (see `CHSI_DataSet.csv)
+list = c(-9999, -2222, -2222.2, -2, -1111.1, -1111, -1)
+
+for (i in 1:length(list)) {
+  data.try[ data.try == list[i] ] <- NA
+}
+
+# Re-check
+sapply(data.try[1:ncol(data.try)], function(x) {list %in% x}) %>% 
+  sum() # all the missing values have been re-written as NA
+
+# See: which variables have NA
+sapply(data.try[1:ncol(data.try)], function(x) sum(length(which(is.na(x)))))
+
+percentage_NA <- sapply(data.try[1:ncol(data.try)], function(x) sum(length(which(is.na(x)))) / nrow(data.try) * 100)
+
+percentage_NA 
+```
+
+Extract all the variables with NA -> data.NA
+
+```{r}
+for (i in 1:length(percentage_NA)) {
+    if (percentage_NA[i] > 0) {
+         print(percentage_NA[i]) # value with name
+    } 
+}
+
+list_NA <- percentage_NA[which(percentage_NA > 0)] %>% 
+  names()
+
+data.NA = data.try %>% 
+  select(one_of(dput(as.character(list_NA))))
+```
+
+Check if there are percentage_NA > 30%
+
+```{r}
+# method 1
+percentage_NA[which(percentage_NA > 30)]
+
+# method 2
+for (i in 1:length(percentage_NA)) {
+    if (percentage_NA[i] > 30) {
+        print(percentage_NA[i]) # value with name
+    } 
+}
+```
+
+`few_fruit_veg` and `high_blood_pres` has missing data > 30%, so we drop them.
+
+```{r}
+data.NA = data.NA %>% 
+  select(-few_fruit_veg, -high_blood_pres )
+
+data.try = data.try %>% 
+  select(-few_fruit_veg, -high_blood_pres )
+```
+
+Draw the histograms for all the variables with NA:
+
+```{r}
+data.NA %>% gather() %>% head()
+
+# subset(data, !is.na(variable)): Eliminating NAs from a ggplot
+ggplot(subset(gather(data.NA), !is.na(value)), aes(value)) + 
+    geom_histogram(bins = 10) + 
+    facet_wrap(~key, scales = 'free_x')
+```
+
+Approximately normal: ale, all_death, diabetes, health_status, no_exercise, obesity, poverty, smoker, unhealth_days  
+
+Mean imputation for these approximately normal variables:
+
+```{r}
+normal_list <- c('ale', 'all_death', 'diabetes', 'health_status', 'no_exercise', 'obesity', 'poverty', 'smoker', 'unhealthy_days')
+
+normal_dataset = data.NA %>% 
+  select(one_of(dput(as.character(normal_list))))
+
+for(i in 1:ncol(normal_dataset)){
+  normal_dataset[is.na(normal_dataset[,i]), i] <- mean(normal_dataset[,i], na.rm = TRUE)
+}
+
+# Check
+sum(is.na(normal_dataset)) # no NA
+```
+
+Median imputation for other skewed variables:
+
+```{r}
+# L[!(L %in% L1)]
+skew_list <- names(data.NA)[!(names(data.NA) %in% normal_list)]
+skew_list
+
+skew_dataset = data.NA %>% 
+  select(one_of(dput(as.character(skew_list))))
+
+for(i in 1:ncol(skew_dataset)){
+  skew_dataset[is.na(skew_dataset[,i]), i] <- median(skew_dataset[,i], na.rm = TRUE)
+}
+
+# Check
+sum(is.na(skew_dataset)) # no NA
+```
+
+Generating resulting dataset with no NAs: `dataset`
+
+```{r}
+no_NA_list <- names(data.try)[!(names(data.try) %in% names(data.NA))]
+no_NA_list
+
+no_NA_dataset = data.try %>% 
+  select(one_of(dput(as.character(no_NA_list))))
+
+dataset = cbind(no_NA_dataset, normal_dataset, skew_dataset)
+```
+
 ### Correlation plot
 
 ```{r}
 library(corrplot)
-```
 
-```{r}
-data_1 = 
-  data %>% 
+dataset_1 = dataset %>% 
   select(-county_name, -state_abbr)
-x = model.matrix(ale ~., data_1)[,-1]
+
+x = model.matrix(ale ~., dataset_1)[,-1]
 corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
+
+cor(dataset_1)
 ```
 

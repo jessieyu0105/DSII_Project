@@ -1,0 +1,73 @@
+---
+title: "NK Models PCA PLS GAM"
+author: "Noah Kreski"
+date: "March 31, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(caret)
+library(splines)
+library(mgcv)
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(pls)
+chsi_data = read_csv("data/dataset.final.csv")
+chsi_data <- subset(chsi_data, select = -c(X1, county_name, state_abbr))
+#Creating general data frame
+x<-model.matrix(ale~., chsi_data)[,-1]
+y<-chsi_data$ale
+
+trRows <- createDataPartition(chsi_data$ale,
+                              p = .75,
+                              list = F)
+#Train data
+x1<-model.matrix(ale~., chsi_data)[trRows, -1]
+y1<-chsi_data$ale[trRows]
+#test data
+x2<-model.matrix(ale~., chsi_data)[-trRows, -1]
+y2<-chsi_data$ale[-trRows]
+```
+```{r PCR}
+#PCR Model
+set.seed(3)
+pcr.mod <-pcr(ale~., 
+              data = chsi_data[trRows,],
+              scale = TRUE,
+              validation = "CV")
+summary(pcr.mod)
+validationplot(pcr.mod, val.type="MSEP", legendpos = "topright")
+#Seems like the reduction wasn't especially effective here
+predy2.pcr <-predict(pcr.mod, newdata = chsi_data[-trRows,],ncomp = 20)
+# test MSE
+mean((predy2.pcr-y2)^2)
+```
+```{r pls}
+set.seed(3)
+pls.mod <-plsr(ale~.,
+               data = chsi_data[trRows,],
+               scale = TRUE,
+               validation = "CV")
+summary(pls.mod)
+
+validationplot(pls.mod, val.type="MSEP", legendpos = "topright")
+#Low at 15
+predy2.pls <-predict(pls.mod, newdata = chsi_data[-trRows,],ncomp = 14)
+# test MSE
+mean((predy2.pls-y2)^2)
+```
+
+```{r gam}
+#I am cross-validating to get a more thorough GAM model with all predictors
+GAMControl <- trainControl(method = "cv", number = 10)
+set.seed(3)
+gam.fit <- train(x, y, method = "gam",
+tuneGrid = data.frame(method = "GCV.Cp", select = c(TRUE,FALSE)),
+trControl = GAMControl)
+gam.fit$bestTune
+GAMFinal<-gam.fit$finalModel
+#I am plotting and getting model summary
+plot(GAMFinal, pages = 4)
+summary(GAMFinal)
+```

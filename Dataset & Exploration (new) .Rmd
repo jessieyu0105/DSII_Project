@@ -151,109 +151,36 @@ data.try = data.try %>%
 **There are missing data in some of our predictors. We assume our data are missing at random (MAR), and apply data imputataion.**
 
 
-Extract all the variables with NA -> data.NA
-
-```{r}
-for (i in 1:length(percentage_NA)) {
-    if (percentage_NA[i] > 0) {
-         print(percentage_NA[i]) # value with name
-    } 
-}
-
-list_NA <- percentage_NA[which(percentage_NA > 0)] %>% 
-  names()
-
-data.NA = data.try %>% 
-  select(one_of(dput(as.character(list_NA)))) %>% 
-  select(-ale)
-```
-
-```{r}
-# Data Imputation using `preProcess` function in `caret` package
-library(caret)
-preProcess_model = preProcess(data.try, method = "knnImpute")
-impuation_caret <- predict(preProcess_model, data.try) 
-
-# Problem: `knnImpute` overwrites all values, not just the NA, and induces negative values
-
-# When using `knnImpute`, data is scaled and centered by default: method = c("center", "scale", "knnImpute"
-
-# cannot avoid scaling and centering data when using method = "knnImpute"
-
-# However, method = "bagImpute" or method = "medianImpute" will not scale and center the data unless you ask it to. For example:
-
-
-
-
-# Data Imputation using `kNN` function in `VIM` package
-library(VIM)
-imputation_vim <- kNN(data.try)
-
-imputation_vim = imputation_vim %>% 
-  select(ale:recent_drug_use)
-
-# summary(data.try)
-# summary(imputation_vim)
-
-# See: which variables have NA
-sapply(imputation_vim[1:ncol(imputation_vim)], function(x) sum(length(which(is.na(x))))) %>% 
-  sum()
-```
-
-Generating resulting dataset without NAs: `dataset`
-
-```{r}
-dataset = imputation_vim
-```
-
 ### Correlation plot
 
 ```{r fig.width = 12, fig.height = 12}
 library(corrplot)
 
-dataset_1 = dataset %>% 
+data.try_1 = data.try %>% 
   select(-county_name, -state_abbr)
 
-x = model.matrix(ale ~., dataset_1)[,-1]
+x = model.matrix(ale ~., data.try_1)[,-1]
 corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
 ```
 
 Highly pairwise correlated (abs > 0.7):
 
-* `white`and `black`: keep `white`
+* `white`and `black`
 
-* `age_85_and_over`and `age_65_84`: keep `age_85_and_over` because the percentage of elderly people might contribute more to our study of life expentancy
+* `age_85_and_over`and `age_65_84`
 
-* `unemployed` and `uninsured`: keep `uninsured` because that’s the more directly health-related variable.
+* `unemployed` and `uninsured`
 
-* `disabled_medicare` and `elderly_medicare`: keep `disabled_medicare`?
+* `disabled_medicare` and `elderly_medicare`
 
-* `unhealthy_days` and `healthy_status`(pairwise correlation = 0.7): keep `healthy_status`?
+* `unhealthy_days` and `healthy_status`(pairwise correlation = 0.7)
 
-```{r}
-dataset = dataset %>% 
-  select(-c(age_19_under, age_19_64, age_65_84), 
-         -c(hispanic, native_american, asian, black),
-         -unemployed,
-         -elderly_medicare,
-         -unhealthy_days
-         )
-```
-
-check correlation again:
-
-```{r fig.width = 12, fig.height = 12}
-dataset_2 = dataset %>% 
-  select(-county_name, -state_abbr)
-
-x = model.matrix(ale ~., dataset_2)[,-1]
-corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
-```
+Generating resulting dataset without NAs: `dataset`
 
 ```{r}
-dataset.final = dataset 
+dataset.final = data.try
 
-names(dataset.final)
+names(data.try)
 ```
 
 ```{r eval = F}

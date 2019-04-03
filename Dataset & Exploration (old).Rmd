@@ -103,6 +103,16 @@ percentage_NA <- sapply(data.try[1:ncol(data.try)], function(x) sum(length(which
 percentage_NA 
 ```
 
+* Delete the two observations with NA in response, since we do not want to impute response data (reasons?)
+
+```{r}
+data.try = data.try %>% 
+  filter(!ale == 'NA')
+```
+
+**There are missing data in some of our predictors. We assume our data are missing at random (MAR), and apply data imputataion.**
+
+
 Extract all the variables with NA -> data.NA
 
 ```{r}
@@ -116,7 +126,8 @@ list_NA <- percentage_NA[which(percentage_NA > 0)] %>%
   names()
 
 data.NA = data.try %>% 
-  select(one_of(dput(as.character(list_NA))))
+  select(one_of(dput(as.character(list_NA)))) %>% 
+  select(-ale)
 ```
 
 Check if there are percentage_NA > 30%
@@ -133,15 +144,7 @@ for (i in 1:length(percentage_NA)) {
 }
 ```
 
-`few_fruit_veg` and `high_blood_pres` has missing data > 30%, so we drop them.
-
-```{r}
-data.NA = data.NA %>% 
-  select(-few_fruit_veg, -high_blood_pres )
-
-data.try = data.try %>% 
-  select(-few_fruit_veg, -high_blood_pres )
-```
+`few_fruit_veg` and `high_blood_pres` has missing data > 30%.
 
 Draw the histograms for all the variables with NA:
 
@@ -200,6 +203,40 @@ no_NA_dataset = data.try %>%
   select(one_of(dput(as.character(no_NA_list))))
 
 dataset = cbind(no_NA_dataset, normal_dataset, skew_dataset)
+```
+
+KNN imputation: 
+
+```{r}
+# Data Imputation using `preProcess` function in `caret` package
+library(caret)
+preProcess_model = preProcess(data.try, method = "knnImpute")
+impuation_caret <- predict(preProcess_model, data.try) 
+
+# Problem: `knnImpute` overwrites all values, not just the NA, and induces negative values
+
+# When using `knnImpute`, data is scaled and centered by default: method = c("center", "scale", "knnImpute"
+
+# cannot avoid scaling and centering data when using method = "knnImpute"
+
+# However, method = "bagImpute" or method = "medianImpute" will not scale and center the data unless you ask it to. For example:
+
+
+
+
+# Data Imputation using `kNN` function in `VIM` package
+library(VIM)
+imputation_vim <- kNN(data.try)
+
+imputation_vim = imputation_vim %>% 
+  select(ale:recent_drug_use)
+
+# summary(data.try)
+# summary(imputation_vim)
+
+# See: which variables have NA
+sapply(imputation_vim[1:ncol(imputation_vim)], function(x) sum(length(which(is.na(x))))) %>% 
+  sum()
 ```
 
 ### Correlation plot

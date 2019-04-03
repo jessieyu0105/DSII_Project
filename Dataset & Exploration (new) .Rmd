@@ -1,0 +1,261 @@
+---
+title: "Dataset & Exploration(new)"
+author: "Jie Yu"
+date: 2019-03-26
+output: html_document
+---
+
+```{r setup, include = TRUE, message = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = F,
+  warning = F
+  ) 
+
+library(tidyverse)
+library(readxl)
+library(stringr)
+```
+
+### Generate resulting dataset
+
+First, make a catalogue
+
+```{r}
+catalogue =  read_excel("./data/CHSI_DataSet.xlsx", sheet = "DATAELEMENTDESCRIPTION") %>% 
+  janitor::clean_names() %>%
+  # pick out "County data"
+  mutate(county_data = ifelse(str_detect(.$description, c("[Cc]ounty data")) == TRUE, 1, 0)) %>% 
+  filter(county_data == 1) %>% 
+  # select the categories of variables which we want to use
+  filter(page_name %in% c("Demographics", "SummaryMeasuresOfHealth", "RiskFactorsAndAccessToCare", "VunerablePopsAndEnvHealth")) %>% 
+  filter(
+    !str_detect(column_name, c("^Ecol")),
+    !str_detect(column_name, c("^Salm")),
+    !str_detect(column_name, c("^Shig")),
+    !str_detect(column_name, c("^Toxic"))
+  ) %>% 
+  select(-county_data)
+
+# Add variables "Community_Health_Center_Ind" and "HPSA_Ind" which was omitted by above catelogue
+catalogue_plus = read_excel("./data/CHSI_DataSet.xlsx", sheet = "DATAELEMENTDESCRIPTION") %>% 
+  janitor::clean_names() %>%
+  filter(page_name %in% "RiskFactorsAndAccessToCare") %>% 
+  filter(column_name %in% c("Community_Health_Center_Ind", "HPSA_Ind"))
+
+catalogue = rbind(catalogue, catalogue_plus)
+```
+
+Select variables from different datasets based on our catalogue
+
+```{r warning = FALSE, message = FALSE}
+demographics = read.csv("./data/Demographics.csv")
+
+# select columns from the dataframe based on variables from another dataframe
+tbl_1 = read.csv("./data/Demographics.csv") %>% 
+  select(one_of(dput(as.character(catalogue$column_name))))
+
+tbl_2 = read.csv("./data/SummaryMeasuresOfHealth.csv") %>% 
+  select(one_of(dput(as.character(catalogue$column_name))))
+
+tbl_3 = read.csv("./data/RiskFactorsAndAccessToCare.csv") %>% 
+  select(one_of(dput(as.character(catalogue$column_name))))
+
+tbl_4 = read.csv("./data/VunerablePopsAndEnvHealth.csv") %>% 
+  select(one_of(dput(as.character(catalogue$column_name))))
+
+data = cbind(tbl_1, tbl_2, tbl_3, tbl_4)
+
+# add identifiers
+data = cbind(demographics$CHSI_County_Name, demographics$CHSI_State_Abbr, data) %>% 
+  rename(county_name = 'demographics$CHSI_County_Name',
+         state_abbr = 'demographics$CHSI_State_Abbr') %>% 
+  janitor::clean_names() %>% 
+  # Take out the response 'ale'
+  select(ale, everything()) %>% 
+  mutate(
+    # recode 1 to 0, recode 2 to 1, turn into dummy variables
+    community_health_center_ind = recode(community_health_center_ind, '1' = 0, '2' = 1),
+    hpsa_ind = recode(hpsa_ind, '1' = 0, '2' = 1)
+    )
+
+# For the variables which are not population_size, divide them by population_size to get a proportion
+
+data = data %>% 
+  mutate(
+    uninsured2 = uninsured / population_size,
+    elderly_medicare2 = elderly_medicare / population_size,
+    disabled_medicare2 = disabled_medicare / population_size,
+    no_hs_diploma2 = no_hs_diploma / population_size,
+    unemployed2 =  unemployed / population_size,
+    sev_work_disabled2 = sev_work_disabled / population_size,
+    major_depression2 = major_depression / population_size,
+    recent_drug_use2 = recent_drug_use / population_size
+    ) %>% 
+  select(-c(major_depression, recent_drug_use, uninsured, elderly_medicare, disabled_medicare, no_hs_diploma, unemployed, sev_work_disabled)) %>% 
+  rename(
+    uninsured = uninsured2,
+    elderly_medicare = elderly_medicare2,
+    disabled_medicare = disabled_medicare2,
+    no_hs_diploma = no_hs_diploma2,
+    unemployed = unemployed2,
+    sev_work_disabled = sev_work_disabled2,
+    major_depression = major_depression2,
+    recent_drug_use = recent_drug_use2
+    )
+```
+
+Look at our resulting dataset:
+
+```{r}
+names(data)
+
+skimr::skim(data)
+```
+
+```{r eval = F}
+write.csv(data, file = "./data/data.csv")
+```
+
+
+### Deal with Missing Data
+
+```{r}
+data.try = data
+
+# List of missing value (see `CHSI_DataSet.csv)
+list = c(-9999, -2222, -2222.2, -2, -1111.1, -1111, -1)
+
+for (i in 1:length(list)) {
+  data.try[ data.try == list[i] ] <- NA
+}
+
+# Re-check
+sapply(data.try[1:ncol(data.try)], function(x) {list %in% x}) %>% 
+  sum() # all the missing values have been re-written as NA
+
+# See: which variables have NA
+sapply(data.try[1:ncol(data.try)], function(x) sum(length(which(is.na(x)))))
+
+# Percentage of NA
+percentage_NA <- sapply(data.try[1:ncol(data.try)], function(x) sum(length(which(is.na(x)))) / nrow(data.try) * 100); percentage_NA
+```
+
+* Delete the two observations with NA in response, since we do not want to impute response data (reasons?)
+
+```{r}
+data.try = data.try %>% 
+  filter(!ale == 'NA')
+```
+
+**There are missing data in some of our predictors. We assume our data are missing at random (MAR), and apply data imputataion.**
+
+
+Extract all the variables with NA -> data.NA
+
+```{r}
+for (i in 1:length(percentage_NA)) {
+    if (percentage_NA[i] > 0) {
+         print(percentage_NA[i]) # value with name
+    } 
+}
+
+list_NA <- percentage_NA[which(percentage_NA > 0)] %>% 
+  names()
+
+data.NA = data.try %>% 
+  select(one_of(dput(as.character(list_NA)))) %>% 
+  select(-ale)
+```
+
+```{r}
+# Data Imputation using `preProcess` function in `caret` package
+library(caret)
+preProcess_model = preProcess(data.try, method = "knnImpute")
+impuation_caret <- predict(preProcess_model, data.try) 
+
+# Problem: `knnImpute` overwrites all values, not just the NA, and induces negative values
+
+# When using `knnImpute`, data is scaled and centered by default: method = c("center", "scale", "knnImpute"
+
+# cannot avoid scaling and centering data when using method = "knnImpute"
+
+# However, method = "bagImpute" or method = "medianImpute" will not scale and center the data unless you ask it to. For example:
+
+
+
+
+# Data Imputation using `kNN` function in `VIM` package
+library(VIM)
+imputation_vim <- kNN(data.try)
+
+imputation_vim = imputation_vim %>% 
+  select(ale:recent_drug_use)
+
+# summary(data.try)
+# summary(imputation_vim)
+
+# See: which variables have NA
+sapply(imputation_vim[1:ncol(imputation_vim)], function(x) sum(length(which(is.na(x))))) %>% 
+  sum()
+```
+
+Generating resulting dataset without NAs: `dataset`
+
+```{r}
+dataset = imputation_vim
+```
+
+### Correlation plot
+
+```{r fig.width = 12, fig.height = 12}
+library(corrplot)
+
+dataset_1 = dataset %>% 
+  select(-county_name, -state_abbr)
+
+x = model.matrix(ale ~., dataset_1)[,-1]
+corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
+```
+
+Highly pairwise correlated (abs > 0.7):
+
+* `white`and `black`: keep `white`
+
+* `age_85_and_over`and `age_65_84`: keep `age_85_and_over` because the percentage of elderly people might contribute more to our study of life expentancy
+
+* `unemployed` and `uninsured`: keep `uninsured` because that’s the more directly health-related variable.
+
+* `disabled_medicare` and `elderly_medicare`: keep `disabled_medicare`?
+
+* `unhealthy_days` and `healthy_status`(pairwise correlation = 0.7): keep `healthy_status`?
+
+```{r}
+dataset = dataset %>% 
+  select(-c(age_19_under, age_19_64, age_65_84), 
+         -c(hispanic, native_american, asian, black),
+         -unemployed,
+         -elderly_medicare,
+         -unhealthy_days
+         )
+```
+
+check correlation again:
+
+```{r fig.width = 12, fig.height = 12}
+dataset_2 = dataset %>% 
+  select(-county_name, -state_abbr)
+
+x = model.matrix(ale ~., dataset_2)[,-1]
+corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
+```
+
+```{r}
+dataset.final = dataset 
+
+names(dataset.final)
+```
+
+```{r eval = F}
+write.csv(dataset.final, file = "./data/dataset.final.csv")
+```

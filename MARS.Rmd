@@ -1,0 +1,51 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pdp)
+library(earth)
+library(tidyverse)
+library(caret)
+```
+
+```{r}
+data = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1, -county_name, -state_abbr)
+
+data[2,34] = NA
+x1 <- model.matrix(ale~., data)[,-1]
+x1 = x1[match(rownames(data), rownames(x1)),]
+
+n = dim(data)[2]
+for (i in 2 : n){
+  x1[,names(data)[i]] = data[[i]]
+}
+rownames(x1) = rownames(data)
+
+y1 <- data$ale
+```
+
+```{r}
+mars_grid <- expand.grid(degree = 1:2, 
+                         nprune = 6:15)
+
+set.seed(3)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+mars.fit <- train(x1, y1,
+                 method = "earth",
+                 tuneGrid = mars_grid,
+                 preProcess = c("center", "scale", "knnImpute"),
+                 trControl = ctrl1)
+
+ggplot(mars.fit)
+
+mars.fit$bestTune
+
+coef(mars.fit$finalModel)
+```
+
+
+

@@ -1,5 +1,5 @@
 ---
-title: "Lasso & Ridge_new"
+title: "Lasso & Ridge"
 author: Shuwei Liu
 date: 3/31/2019
 output: html_document
@@ -11,23 +11,40 @@ library(tidyverse)
 library(glmnet)
 library(plotmo)
 library(caret)
+library(RANN)
 ```
 
 ```{r}
 # import data
 data = read_csv("./data/dataset.final.csv") %>% 
   select(-X1, -county_name, -state_abbr)
+
 set.seed(3)
 trRows <- createDataPartition(data$ale,
                               p = .75,
                               list = F)
+
+
+data[2,34] = NA
+x1 <- model.matrix(ale~., data)[,-1]
+x1 = x1[match(rownames(data), rownames(x1)),]
+
+n = dim(data)[2]
+for (i in 2 : n){
+  x1[,names(data)[i]] = data[[i]]
+}
+rownames(x1) = rownames(data)
+
+y1 <- data$ale
+
+
 #Train data
-x1<-model.matrix(ale~., data)[trRows, -1]
-y1<-data$ale[trRows]
+#x1<-model.matrix(ale~., data)[trRows, -1]
+#y1<-data$ale[trRows]
 
 #Test data
-x2<-model.matrix(ale~., data)[-trRows, -1]
-y2<-data$ale[-trRows]
+#x2<-model.matrix(ale~., data)[-trRows, -1]
+#y2<-data$ale[-trRows]
 ```
 
 ## `glmnet()`
@@ -36,51 +53,51 @@ y2<-data$ale[-trRows]
 
 ```{r}
 # ridge
-set.seed(3)
-cv.ridge <- cv.glmnet(x1, y1, 
-                      alpha = 0, 
-                      lambda = exp(seq(-1.8, 1, length=200)), 
-                      type.measure = "mse")
+#set.seed(3)
+#cv.ridge <- cv.glmnet(x1, y1, 
+  #                    alpha = 0, 
+#                      lambda = exp(seq(-1.8, 1, length=200)), 
+ #                     type.measure = "mse")
 # cv.glmnet helps find the optimal lambda using cross-validation
-plot(cv.ridge)
-plot_glmnet(cv.ridge$glmnet.fit)
-cv.ridge$lambda.min
+#plot(cv.ridge)
+#plot_glmnet(cv.ridge$glmnet.fit)
+#cv.ridge$lambda.min
 ```
 
 ```{r}
-best.lambda <- cv.ridge$lambda.min 
-coef_ridge = predict(cv.ridge, s = best.lambda, type="coefficients")
-head(coef_ridge)
-pred_rg = predict(cv.ridge, s = best.lambda, newx = x2, type = "response")
+#best.lambda <- cv.ridge$lambda.min 
+#coef_ridge = predict(cv.ridge, s = best.lambda, type="coefficients")
+#head(coef_ridge)
+#pred_rg = predict(cv.ridge, s = best.lambda, newx = x2, type = "response")
 # test MSE
-mean((pred_rg - y2)^2)
+#mean((pred_rg - y2)^2)
 ```
 
 ### Lasso
 
 ```{r}
-set.seed(3)
-cv.lasso <- cv.glmnet(x1, y1, 
-                      alpha = 1, 
-                      lambda = exp(seq(-6.8, 1, length=200)))
-plot(cv.lasso) 
+#set.seed(3)
+#cv.lasso <- cv.glmnet(x1, y1, 
+ #                     alpha = 1, 
+  #                    lambda = exp(seq(-6.8, 1, length=200)))
+#plot(cv.lasso) 
 #trace plot
-plot_glmnet(cv.lasso$glmnet.fit)
-cv.lasso$lambda.min
+#plot_glmnet(cv.lasso$glmnet.fit)
+#cv.lasso$lambda.min
 ```
 
 ```{r}
-best.lambda = cv.lasso$lambda.min
+#best.lambda = cv.lasso$lambda.min
 
-coef_rg = 
-  predict(cv.lasso, s=best.lambda, type="coefficients")
+#coef_rg = 
+#  predict(cv.lasso, s=best.lambda, type="coefficients")
 
-nrow(summary(coef_rg))
+#nrow(summary(coef_rg))
 # There are 19 non-zero coefficient estimates
 
-pred_rg = predict(cv.lasso, s=best.lambda, newx = x2, type = "response")
+# pred_rg = predict(cv.lasso, s=best.lambda, newx = x2, type = "response")
 # test MSE
-mean((pred_rg - y2)^2)
+# mean((pred_rg - y2)^2)
 ```
 
 
@@ -94,19 +111,23 @@ ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 ridge.fit <- train(x1, y1,
                      method = "glmnet",
                      tuneGrid = expand.grid(alpha = 0,  
-                                            lambda = exp(seq(-5, 0.1, length=200))),
+                                            lambda = exp(seq(-1.5, -0.8, length=200))),
+                   preProcess = c( "center", "scale", "medianImpute"),
                      trControl = ctrl1)
 
 plot(ridge.fit, xTrans = function(x) log(x)) 
+
+trans = preProcess(x1, method = c("center", "scale", "medianImpute"))
 
 ridge.fit$bestTune
 
 coef_ridge = coef(ridge.fit$finalModel,ridge.fit$bestTune$lambda)
 head(coef_ridge)
 
-pred_rg = predict(ridge.fit$finalModel, s = ridge.fit$bestTune$lambda, newx = x2, type = "response")
+pred_rg = predict(ridge.fit$finalModel, s = ridge.fit$bestTune$lambda, newx = predict(trans, x1),
+                  type = "response")
 # test MSE
-mean((pred_rg - y2)^2)
+mean((pred_rg - y1)^2)
 ```
 
 ### Lasso
@@ -116,19 +137,25 @@ set.seed(3)
 lasso.fit <- train(x1, y1,
                    method = "glmnet",
                    tuneGrid = expand.grid(alpha = 1, 
-                                          lambda = exp(seq(-7, 1, length=200))),
+                                          lambda = exp(seq(-4, -1, length=200))),
+                   preProcess = c("center", "scale", "medianImpute"),
                    trControl = ctrl1)
-coef_rg = 
-  predict(lasso.fit$finalModel, newx = x2, 
+
+plot(lasso.fit, xTrans = function(x) log(x))
+
+trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+
+coef_lasso = 
+  predict(lasso.fit$finalModel, newx =  predict(trans,x1), 
                         s = lasso.fit$bestTune$lambda, type="coefficients")
 
-nrow(summary(coef_rg))
-# There are 19 non-zero coefficient estimates
+nrow(summary(coef_lasso))
+# There are 17 non-zero coefficient estimates
 
-predy2.lasso <- predict(lasso.fit$finalModel, newx = x2, 
+predy2.lasso <- predict(lasso.fit$finalModel, newx = predict(trans,x1), 
                         s = lasso.fit$bestTune$lambda, type = "response")
 # test MSE
-mean((predy2.lasso - y2)^2)
+mean((predy2.lasso - y1)^2)
 ```
 
 ```{r}
@@ -136,6 +163,7 @@ set.seed(3)
 
 lm.fit <- train(x1, y1,
                 method = "lm",
+                preProcess = c("center", "scale", "medianImpute"),
                 trControl = ctrl1)
 
 resamp <- resamples(list(lasso = lasso.fit, 

@@ -44,6 +44,8 @@ y1<-data$ale[trRows]
 x2<-as.matrix(x)[-trRows,]
 y2<-data$ale[-trRows]
 ```
+
+
 ```{r PCR}
 #PCR Model
 set.seed(3)
@@ -64,6 +66,8 @@ predy2.pcr = predict(pcr.fit$finalModel, newdata = predict(trans, x2), ncomp = p
 mean((predy2.pcr - y2)^2)
 ggplot(pcr.fit, highlight = TRUE)+ theme_bw()
 ```
+
+
 ```{r pls}
 set.seed(3)
 ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
@@ -82,6 +86,8 @@ predy2.pls = predict(pls.fit$finalModel, newdata = predict(trans, x2), ncomp = p
 mean((predy2.pls - y2)^2)
 ggplot(pls.fit, highlight = TRUE)+ theme_bw()
 ```
+
+
 ```{r}
 set.seed(3)
 resamp <- resamples(list(pcr = pcr.fit, 
@@ -89,14 +95,16 @@ resamp <- resamples(list(pcr = pcr.fit,
 summary(resamp)
 bwplot(resamp, metric = "RMSE")
 ```
+
+
 ```{r gam}
-#set.seed(3)
-#ctrl1 <- trainControl(method = "cv", number = 5)
-#gam.fit <- train(x, y,
-#                     method = "gam",
-#                    tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
-#                   preProcess = c( "center", "scale", "knnImpute"),
-#                     trControl = ctrl1)
-#summary(gam.fit)
-#plot(gam.fit$finalModel)
+set.seed(3)
+ctrl1 <- trainControl(method = "cv", number = 5)
+gam.fit <- train(x, y,
+                     method = "gam",
+                    tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
+                   preProcess = c( "center", "scale", "knnImpute"),
+                     trControl = ctrl1)
+summary(gam.fit)
+plot(gam.fit$finalModel, pages = 4)
 ```

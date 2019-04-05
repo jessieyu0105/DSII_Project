@@ -2,9 +2,7 @@
 title: "NK Models PCA PLS GAM"
 author: "Noah Kreski"
 date: "March 31, 2019"
-output:
-  pdf_document: default
-  html_document: default
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -92,13 +90,13 @@ summary(resamp)
 bwplot(resamp, metric = "RMSE")
 ```
 ```{r gam}
-set.seed(3)
-ctrl1 <- trainControl(method = "cv", number = 5)
-gam.fit <- train(x, y,
-                     method = "gam",
-                     tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
-                   preProcess = c( "center", "scale", "knnImpute"),
-                     trControl = ctrl1)
-gam.fit$finalModel
-summary(gam.fit)
+#set.seed(3)
+#ctrl1 <- trainControl(method = "cv", number = 5)
+#gam.fit <- train(x, y,
+#                     method = "gam",
+#                    tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
+#                   preProcess = c( "center", "scale", "knnImpute"),
+#                     trControl = ctrl1)
+#summary(gam.fit)
+#plot(gam.fit$finalModel)
 ```

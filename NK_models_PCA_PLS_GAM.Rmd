@@ -99,7 +99,7 @@ bwplot(resamp, metric = "RMSE")
 
 ```{r gam}
 set.seed(3)
-ctrl1 <- trainControl(method = "cv", number = 5)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 gam.fit <- train(x, y,
                      method = "gam",
                     tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),

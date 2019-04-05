@@ -58,7 +58,7 @@ ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 ridge.fit <- train(x1, y1,
                      method = "glmnet",
                      tuneGrid = expand.grid(alpha = 0,  
-                                            lambda = exp(seq(-1.5, -0.8, length=200))),
+                                            lambda = exp(seq(-5, 2, length=200))),
                    preProcess = c( "center", "scale", "knnImpute"),
                      trControl = ctrl1)
 

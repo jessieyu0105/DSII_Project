@@ -1,5 +1,7 @@
 ---
-title: "Untitled"
+title: "MARS"
+author: Shuwei Liu
+date: 4/4/2019
 output: html_document
 ---
 
@@ -15,22 +17,37 @@ library(caret)
 data = read_csv("./data/dataset.final.csv") %>% 
   select(-X1, -county_name, -state_abbr)
 
+set.seed(3)
+trRows <- createDataPartition(data$ale,
+                              p = .75,
+                              list = F)
+
 data[2,34] = NA
-x1 <- model.matrix(ale~., data)[,-1]
-x1 = x1[match(rownames(data), rownames(x1)),]
+x <- model.matrix(ale~., data)[,-1]
+x = x[match(rownames(data), rownames(x)),]
 
 n = dim(data)[2]
 for (i in 2 : n){
-  x1[,names(data)[i]] = data[[i]]
+  x[,names(data)[i]] = data[[i]]
 }
-rownames(x1) = rownames(data)
+rownames(x) = rownames(data)
 
-y1 <- data$ale
+y <- data$ale
+
+
+#Train data
+x1<-as.matrix(x)[trRows,]
+y1<-data$ale[trRows]
+
+#Test data
+x2<-as.matrix(x)[-trRows,]
+y2<-data$ale[-trRows]
 ```
 
 ```{r}
+# MARS
 mars_grid <- expand.grid(degree = 1:2, 
-                         nprune = 6:15)
+                         nprune = 3:15)
 
 set.seed(3)
 ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)

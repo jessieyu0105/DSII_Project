@@ -15,18 +15,19 @@ library(readr)
 library(pls)
 chsi_data = read_csv("data/dataset.final.csv")
 chsi_data <- subset(chsi_data, select = -c(X1, county_name, state_abbr))
+data[2,34] = NA
 #Creating general data frame
 x<-model.matrix(ale~., chsi_data)[,-1]
 y<-chsi_data$ale
-
+set.seed(3)
 trRows <- createDataPartition(chsi_data$ale,
                               p = .75,
                               list = F)
 #Train data
-x1<-model.matrix(ale~., chsi_data)[trRows, -1]
+#x1<-model.matrix(ale~., chsi_data)[trRows, -1]
 y1<-chsi_data$ale[trRows]
 #test data
-x2<-model.matrix(ale~., chsi_data)[-trRows, -1]
+#x2<-model.matrix(ale~., chsi_data)[-trRows, -1]
 y2<-chsi_data$ale[-trRows]
 ```
 ```{r PCR}
@@ -39,7 +40,7 @@ pcr.mod <-pcr(ale~.,
 summary(pcr.mod)
 validationplot(pcr.mod, val.type="MSEP", legendpos = "topright")
 #Seems like the reduction wasn't especially effective here
-predy2.pcr <-predict(pcr.mod, newdata = chsi_data[-trRows,],ncomp = 20)
+predy2.pcr <-predict(pcr.mod, newdata = chsi_data[-trRows,],ncomp = 32)
 # test MSE
 mean((predy2.pcr-y2)^2)
 ```
@@ -52,8 +53,8 @@ pls.mod <-plsr(ale~.,
 summary(pls.mod)
 
 validationplot(pls.mod, val.type="MSEP", legendpos = "topright")
-#Low at 15
-predy2.pls <-predict(pls.mod, newdata = chsi_data[-trRows,],ncomp = 14)
+#Low at 19
+predy2.pls <-predict(pls.mod, newdata = chsi_data[-trRows,],ncomp = 19)
 # test MSE
 mean((predy2.pls-y2)^2)
 ```

@@ -1,0 +1,305 @@
+---
+title: "Plots to Choose the Best Model"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(glmnet)
+library(plotmo)
+library(caret)
+library(RANN)
+
+library(splines)
+library(mgcv)
+library(readr)
+library(pls)
+
+library(pdp)
+library(earth)
+```
+
+```{r}
+# import data
+data = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1, -county_name, -state_abbr)
+
+set.seed(3)
+trRows <- createDataPartition(data$ale,
+                              p = .75,
+                              list = F)
+
+
+data[2,34] = NA
+x <- model.matrix(ale~., data)[,-1]
+x = x[match(rownames(data), rownames(x)),]
+
+n = dim(data)[2]
+for (i in 2 : n){
+  x[,names(data)[i]] = data[[i]]
+}
+rownames(x) = rownames(data)
+
+y <- data$ale
+
+
+#Train data
+x1<-as.matrix(x)[trRows,]
+y1<-data$ale[trRows]
+
+#Test data
+x2<-as.matrix(x)[-trRows,]
+y2<-data$ale[-trRows]
+```
+
+
+## `caret`
+
+### Ridge
+
+```{r}
+set.seed(3)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+ridge.fit <- train(x1, y1,
+                     method = "glmnet",
+                     tuneGrid = expand.grid(alpha = 0,  
+                                            lambda = exp(seq(-5, 2, length=200))),
+                   preProcess = c( "center", "scale", "knnImpute"),
+                     trControl = ctrl1)
+
+plot(ridge.fit, xTrans = function(x1) log(x1)) 
+
+trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+
+ridge.fit$bestTune
+
+coef_ridge = coef(ridge.fit$finalModel,ridge.fit$bestTune$lambda)
+head(coef_ridge)
+
+pred_rg = predict(ridge.fit$finalModel, s = ridge.fit$bestTune$lambda, newx = predict(trans, x2),
+                  type = "response")
+# test MSE
+mean((pred_rg - y2)^2)
+```
+
+### Lasso
+
+```{r}
+set.seed(3)
+lasso.fit <- train(x1, y1,
+                   method = "glmnet",
+                   tuneGrid = expand.grid(alpha = 1, 
+                                          lambda = exp(seq(-4, -1, length=200))),
+                   preProcess = c("center", "scale", "knnImpute"),
+                   trControl = ctrl1)
+
+plot(lasso.fit, xTrans = function(x1) log(x1))
+
+trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+
+coef_lasso = 
+  predict(lasso.fit$finalModel, newx =  predict(trans,x2), 
+                        s = lasso.fit$bestTune$lambda, type="coefficients")
+
+nrow(summary(coef_lasso))
+# There are 17 non-zero coefficient estimates
+
+predy2.lasso <- predict(lasso.fit$finalModel, newx = predict(trans,x2), 
+                        s = lasso.fit$bestTune$lambda, type = "response")
+# test MSE
+mean((predy2.lasso - y2)^2)
+```
+
+### Least Square
+
+```{r}
+set.seed(3)
+
+lm.fit <- train(x1, y1,
+                method = "lm",
+                preProcess = c("center", "scale", "knnImpute"),
+                trControl = ctrl1)
+
+resamp <- resamples(list(lasso = lasso.fit, 
+                         ridge = ridge.fit, 
+                         lm = lm.fit))
+summary(resamp)
+```
+
+```{r}
+bwplot(resamp, metric = "RMSE")
+```
+
+### PCR
+
+```{r PCR}
+#PCR Model
+set.seed(3)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+pcr.fit <- train(x1, y1,
+                     method = "pcr",
+                     tuneLength = 33,
+                   preProcess = c( "center", "scale", "knnImpute"),
+                     trControl = ctrl1)
+
+
+trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+
+
+
+predy2.pcr = predict(pcr.fit$finalModel, newdata = predict(trans, x2), ncomp = pcr.fit$bestTune$ncomp)
+# test MSE
+mean((predy2.pcr - y2)^2)
+ggplot(pcr.fit, highlight = TRUE)+ theme_bw()
+```
+
+### PLS
+
+```{r pls}
+set.seed(3)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+pls.fit <- train(x1, y1,
+                     method = "pls",
+                     tuneLength = 33,
+                   preProcess = c( "center", "scale", "knnImpute"),
+                     trControl = ctrl1)
+
+
+trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+
+
+predy2.pls = predict(pls.fit$finalModel, newdata = predict(trans, x2), ncomp = pls.fit$bestTune$ncomp)
+# test MSE
+mean((predy2.pls - y2)^2)
+ggplot(pls.fit, highlight = TRUE)+ theme_bw()
+```
+
+### GAM
+
+```{r gam}
+set.seed(3)
+ctrl1 <- trainControl(method = "repeatedcv", number = 5)
+gam.fit <- train(x, y,
+                 method = "gam",
+                 tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
+                 preProcess = c( "center", "scale", "knnImpute"),
+                 trControl = ctrl1)
+summary(gam.fit)
+plot(gam.fit$finalModel, pages = 4)
+```
+
+### MARS1
+
+```{r}
+# MARS
+mars_grid <- expand.grid(degree = 1:2, 
+                         nprune = 3:15)
+
+set.seed(3)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+mars.fit <- train(x1, y1,
+                 method = "earth",
+                 tuneGrid = mars_grid,
+                 preProcess = c("center", "scale", "knnImpute"),
+                 trControl = ctrl1)
+
+ggplot(mars.fit)
+
+mars.fit$bestTune
+
+coef(mars.fit$finalModel)
+```
+
+
+### Table and Plots for RMSE
+
+```{r}
+set.seed(3)
+
+resamp <- resamples(list(lasso = lasso.fit, 
+                         ridge = ridge.fit, 
+                         lm = lm.fit,
+                         pcr = pcr.fit,
+                         pls = pls.fit,
+                         gam = gam.fit
+                         mars = mars.fit))
+summary(resamp)
+bwplot(resamp, metric = "RMSE")
+
+rmse.df <- resamp$values %>% 
+  select(ends_with("~RMSE")) 
+```
+
+Summary Table for RMSE across models
+
+```{r }
+table.mse <- rmse.df %>% 
+  gather(key = model, value = mse) %>% 
+  mutate(model = str_replace(model, "~RMSE", ""),
+         model = fct_reorder(model, mse, .desc = FALSE, .fun = mean)) %>%
+  group_by(model) %>%
+  summarize(
+    mean_rmse = mean(mse),
+    median_rmse = median(mse),
+    variance_rmse = sd(mse)^2,
+    Q1 = quantile(mse, .25),
+    Q3 = quantile(mse, .75)
+  ) 
+
+table.mse %>% knitr::kable(digits = 4)
+```
+
+Plots for RMSE across models
+
+```{r}
+# Density Plot for RMSE
+density.mse <- rmse.df %>% 
+  gather(key = model, value = mse) %>% 
+  mutate(model = str_replace(model, "~RMSE", ""),
+         model = fct_reorder(model, mse, .desc = FALSE, .fun = mean)) %>% 
+  ggplot(aes(x = mse, colour = model, fill = model)) + 
+  geom_density(position = "stack", alpha = 0.3) + 
+  labs(
+    y = "Density",
+    x = "Root Mean Square Error",
+    title = sprintf("Model RMSE Comparison")
+  ) +
+  viridis::scale_fill_viridis(
+    option = "magma",
+    name = "MSE",
+    begin = 1,
+    end = 0,
+    discrete = TRUE) +
+    viridis::scale_colour_viridis(
+    option = "magma",
+    name = "MSE",
+    begin = 1,
+    end = 0,
+    discrete = TRUE)
+
+# Violin Plot for RMSE
+violin.mse <- rmse.df %>% 
+  gather(key = model, value = mse) %>% 
+  mutate(model = str_replace(model, "~RMSE", ""),
+         model = fct_reorder(model, mse, .desc = FALSE, .fun = mean)) %>% 
+  ggplot(aes(x = model, y = mse)) + 
+  geom_violin(aes(fill = model), trim = FALSE, alpha = 0.3) + 
+  geom_boxplot(width = 0.25) +
+  labs(
+    y = "CV Root Mean Sqaure Error",
+    x = "Model",
+    title = sprintf("Model RMSE Comparison")
+  ) +
+  viridis::scale_fill_viridis(
+    option = "magma",
+    name = "MSE",
+    begin = 1,
+    end = 0,
+    discrete = TRUE) 
+```
+
+```{r echo = FALSE}
+violin.mse
+density.mse
+```

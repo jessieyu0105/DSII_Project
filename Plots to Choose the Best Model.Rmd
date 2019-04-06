@@ -179,7 +179,7 @@ ggplot(pls.fit, highlight = TRUE)+ theme_bw()
 
 ```{r gam}
 set.seed(3)
-ctrl1 <- trainControl(method = "repeatedcv", number = 5)
+ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 gam.fit <- train(x, y,
                  method = "gam",
                  tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
@@ -222,7 +222,7 @@ resamp <- resamples(list(lasso = lasso.fit,
                          lm = lm.fit,
                          pcr = pcr.fit,
                          pls = pls.fit,
-                         gam = gam.fit
+                         gam = gam.fit,
                          mars = mars.fit))
 summary(resamp)
 bwplot(resamp, metric = "RMSE")

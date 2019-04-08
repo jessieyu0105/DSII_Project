@@ -176,7 +176,7 @@ pls.fit <- train(x1, y1,
 
 
 trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
-
+summary(pls.fit)
 
 predy2.pls = predict(pls.fit$finalModel, newdata = predict(trans, x2), ncomp = pls.fit$bestTune$ncomp)
 # test MSE
@@ -195,6 +195,7 @@ gam.fit <- train(x, y,
                  preProcess = c( "center", "scale", "knnImpute"),
                  trControl = ctrl1)
 summary(gam.fit)
+gam.fit$bestTune
 plot(gam.fit$finalModel, pages = 4)
 ```
 
@@ -214,7 +215,7 @@ mars.fit <- train(x1, y1,
                  trControl = ctrl1)
 
 ggplot(mars.fit)
-
+summary(mars.fit)
 mars.fit$bestTune
 
 coef(mars.fit$finalModel)
@@ -254,9 +255,11 @@ table.mse <- rmse.df %>%
     variance_rmse = sd(mse)^2,
     Q1 = quantile(mse, .25),
     Q3 = quantile(mse, .75)
-  ) 
+  ) %>% 
+  select(model, mean_rmse, variance_rmse, Q1, median_rmse, Q3)
 
-table.mse %>% knitr::kable(digits = 4)
+table.mse %>% 
+  knitr::kable(digits = 4)
 ```
 
 Plots for RMSE across models

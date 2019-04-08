@@ -339,7 +339,7 @@ skimr::skim(data)
 ##  n obs: 3141 
 ##  n variables: 36 
 ## 
-## -- Variable type:factor -----------------------------------------------------------------------------
+## -- Variable type:factor ------------------------------------------------------------------------------------------------
 ##     variable missing complete    n n_unique
 ##  county_name       0     3141 3141     1847
 ##   state_abbr       0     3141 3141       51
@@ -347,7 +347,7 @@ skimr::skim(data)
 ##  Was: 32, Jef: 26, Fra: 25, Jac: 24   FALSE
 ##  TX: 254, GA: 159, VA: 134, KY: 120   FALSE
 ## 
-## -- Variable type:integer ----------------------------------------------------------------------------
+## -- Variable type:integer -----------------------------------------------------------------------------------------------
 ##            variable missing complete    n     mean        sd    p0   p25
 ##  population_density       0     3141 3141   249.12   1703.04 -2222    17
 ##     population_size       0     3141 3141 94368.16 306431.66    62 11211
@@ -355,7 +355,7 @@ skimr::skim(data)
 ##     44   109   69390 ▇▁▁▁▁▁▁▁
 ##  25235 64040 9935475 ▇▁▁▁▁▁▁▁
 ## 
-## -- Variable type:numeric ----------------------------------------------------------------------------
+## -- Variable type:numeric -----------------------------------------------------------------------------------------------
 ##                     variable missing complete    n     mean       sd
 ##                    age_19_64       0     3141 3141   60.29    3.36  
 ##                 age_19_under       0     3141 3141   24.81    3.28  
@@ -542,6 +542,34 @@ corrplot(cor(x), method = &quot;number&quot;, number.cex = 0.5, tl.cex = 0.8)</c
 <li><p><code>disabled_medicare</code> and <code>elderly_medicare</code></p></li>
 <li><p><code>unhealthy_days</code> and <code>healthy_status</code>(pairwise correlation = 0.7)</p></li>
 </ul>
+</div>
+<div id="scatterplot-matrix" class="section level3">
+<h3>Scatterplot Matrix</h3>
+<p>too large, have redundant information as correlation plot</p>
+<pre class="r"><code>panel.cor &lt;- function(x, y, digits = 2, cex.cor, ...)
+{
+  usr &lt;- par(&quot;usr&quot;); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  # correlation coefficient
+  r &lt;- cor(x, y)
+  txt &lt;- format(c(r, 0.123456789), digits = digits)[1]
+  txt &lt;- paste(&quot;r= &quot;, txt, sep = &quot;&quot;)
+  text(0.5, 0.6, txt)
+
+  # p-value calculation
+  p &lt;- cor.test(x, y)$p.value
+  txt2 &lt;- format(c(p, 0.123456789), digits = digits)[1]
+  txt2 &lt;- paste(&quot;p= &quot;, txt2, sep = &quot;&quot;)
+  if(p&lt;0.01) txt2 &lt;- paste(&quot;p= &quot;, &quot;&lt;0.01&quot;, sep = &quot;&quot;)
+  text(0.5, 0.4, txt2)
+}
+
+
+data.try_2 = data.try %&gt;% 
+  select(-county_name, -state_abbr) %&gt;% 
+  select(-community_health_center_ind, -hpsa_ind)
+
+# pairs(data.try_2, upper.panel = panel.cor)</code></pre>
 <p>Generating resulting dataset without NAs: <code>dataset</code></p>
 <pre class="r"><code>dataset.final = data.try
 

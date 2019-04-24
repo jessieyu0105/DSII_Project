@@ -153,7 +153,11 @@ _5) Vulnerable Populations_:
 
 # Final - Planned analyses 
 
-10-fold cross validation (without repeating)
+since our response variable (life expectancy) is continuous  
+
+10-fold cross validation (without repeating)  
+
+also report the variable importance    
 
 * Regression tree (+1SE?)
 * random forest 
@@ -163,7 +167,7 @@ _5) Vulnerable Populations_:
 
 * maybe: PCA, Clusting to explore the pattern among the observations      
 
-compare models via cross-validation RMSE, cross-validation R-squared (predictive ability?)  
+compare models via cross-validation RMSE, cross-validation R-squared? (around 80%, increase as the number of predictors increase)
 
 compare test MSE for model validation (to see if results are accurate)
 

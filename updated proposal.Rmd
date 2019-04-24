@@ -1,15 +1,18 @@
 ---
-title: "Proposal"
+title: "Fianl Proposal"
 date: 2019-03-11
 author: "Group 8"
-output: html_document
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
 ---
 
 ```{r setup, include = FALSE}
 library(tidyverse)
 ```
 
-## Group Members
+# Group Members
 
 ```{r, echo = F}
 tibble(Name = c('Noah T. Kreski', 'Shuwei Liu', 'Jie Yu'),
@@ -17,7 +20,7 @@ tibble(Name = c('Noah T. Kreski', 'Shuwei Liu', 'Jie Yu'),
   knitr::kable()
 ```
 
-## Project Title
+# Project Title
 
 A Predictive Model for Life Expentancy using Community Health Status Indicators (CHSI) Data
 
@@ -43,7 +46,7 @@ _Short Description:_
 Community Health Status Indicators (CHSI) to combat obesity, heart disease, and cancer are major components of the Community Health Data Initiative. This dataset, which contains over 200 measures for each of the 3,141 United States counties, provides key health indicators for local communities and encourages dialogue about actions that can be taken to improve community health (e.g., obesity, heart disease, cancer).
 
 
-## Response and predictors
+# Response and predictors
 
 **Response variable**: 
 
@@ -123,7 +126,7 @@ _5) Vulnerable Populations_:
 * `Recent_Drug_Use`: The number of individuals aged 12 years and older using illicit drugs within the past month
 
 
-## Planned analyses
+# Midterm - Planned analyses
 
 1.Data exploration: descriptive and visualization
 
@@ -143,9 +146,27 @@ _5) Vulnerable Populations_:
 
 * GAM
 
-* KNN
-
 * MARS
 
 4.Determine the best predictive model:  use k-folds Cross Validation to check the predictability of our models; made density plots to compare the distributions of testing RMSE for all models, and select the best predictive model
+
+
+# Final - Planned analyses 
+
+10-fold cross validation (without repeating)
+
+* Regression tree (+1SE?)
+* random forest 
+* bagging
+* boosting
+* knn
+
+* maybe: PCA, Clusting to explore the pattern among the observations      
+
+compare models via cross-validation RMSE, cross-validation R-squared (predictive ability?)  
+
+compare test MSE to see if the results are accurate and stable  
+
+**Paper writing: begin from 5/2 or 5/7**
+
 

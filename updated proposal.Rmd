@@ -165,7 +165,7 @@ _5) Vulnerable Populations_:
 
 compare models via cross-validation RMSE, cross-validation R-squared (predictive ability?)  
 
-compare test MSE to see if the results are accurate and stable  
+compare test MSE for model validation (to see if results are accurate)
 
 **Paper writing: begin from 5/2 or 5/7**
 

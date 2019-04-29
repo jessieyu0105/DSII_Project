@@ -1,0 +1,108 @@
+---
+title: "Regreesion Tree"
+author: Shuwei Liu
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(party)
+library(partykit)
+library(randomForest)
+library(ranger)
+library(gbm)
+library(plotmo)
+library(pdp)
+library(lime)
+library(tidyverse)
+```
+
+```{r}
+data = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1, -county_name, -state_abbr)
+
+set.seed(3)
+trRows <- createDataPartition(data$ale,
+                              p = .75,
+                              list = F)
+
+
+data[2,34] = NA
+x <- model.matrix(ale~., data)[,-1]
+x = x[match(rownames(data), rownames(x)),]
+
+n = dim(data)[2]
+for (i in 2 : n){
+  x[,names(data)[i]] = data[[i]]
+}
+rownames(x) = rownames(data)
+
+y <- data$ale
+
+
+#Train data
+x1<-as.matrix(x)[trRows,]
+y1<-data$ale[trRows]
+data_train = data[trRows,]
+
+#Test data
+x2<-as.matrix(x)[-trRows,]
+y2<-data$ale[-trRows]
+data_test = data[-trRows,]
+```
+
+## Regression Tree
+
+```{r}
+ctrl <- trainControl(method = "cv")
+
+set.seed(1)
+# tune over cp, method = "rpart"
+rpart.fit <- train(x1, y1, 
+                   method = "rpart",
+                   tuneGrid = data.frame(cp = exp(seq(-6,-4, length = 20))),
+                   preProcess = c( "center", "scale", "knnImpute"),
+                   trControl = ctrl)
+ggplot(rpart.fit, highlight = TRUE)
+rpart.plot(rpart.fit$finalModel)
+```
+
+## Bagging
+
+```{r}
+bag.grid <- expand.grid(mtry = 33,
+                       splitrule = "variance",
+                       min.node.size = 1:15)
+set.seed(1)
+bag.fit <- train(x1, y1, 
+                method = "ranger",
+                tuneGrid = bag.grid,
+                preProcess = c( "center", "scale", "knnImpute"),
+                trControl = ctrl)
+
+ggplot(bag.fit, highlight = TRUE)
+
+bag.fit$bestTune
+```
+
+## Random Forest
+
+```{r}
+rf.grid <- expand.grid(mtry = 1:33,
+                       splitrule = "variance",
+                       min.node.size = 1:15)
+set.seed(1)
+rf.fit <- train(x1, y1, 
+                method = "ranger",
+                tuneGrid = rf.grid,
+                preProcess = c( "center", "scale", "knnImpute"),
+                trControl = ctrl)
+
+ggplot(rf.fit, highlight = TRUE)
+
+rf.fit$bestTune
+```
+

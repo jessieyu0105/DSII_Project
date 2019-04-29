@@ -65,16 +65,31 @@ ctrl <- trainControl(method = "cv")
 
 ```{r}
 set.seed(3)
+
+# To find the optimal tuning parameter: 
+
+# First I tried `tuneGrid = data.frame(k = seq(1,300,by = 5))`, the optimal k is 21. The cross-validation RMSE keep rising as k increases from 21 to 300 by adding increment number 5 for each time.
+
+# Then I tried `tuneGrid = data.frame(k = seq(1,50,by = 1))`, generate the sequence from 1 to 30 by adding increment number 1 for each time, the optimal k is 8
 knn.fit <- train(x1, y1,
                  method = "knn",
-                 tuneGrid = data.frame(k = seq(1,500,by = 5)),
+                 tuneGrid = data.frame(k = seq(1,50,by = 1)),
                  preProcess = c( "center", "scale", "knnImpute"),
                  trControl = ctrl)
 
-model.knn$bestTune
+knn.fit$bestTune
 
-ggplot(model.knn)
+ggplot(knn.fit)
+
+# test MSE
+trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+pred.knn = predict(knn.fit$finalModel, 
+                   k = knn.fit$bestTune$k, 
+                   newdata = predict(trans, x2),
+                   type = "response")
+mean((pred.knn - y2)^2)
 ```
+
 
 ### Boosting
 

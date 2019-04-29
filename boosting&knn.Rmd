@@ -1,0 +1,101 @@
+---
+title: "boosting and knn"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(glmnet)
+library(plotmo)
+library(caret)
+library(RANN)
+
+library(splines)
+library(mgcv)
+library(readr)
+library(pls)
+
+library(pdp)
+library(earth)
+```
+
+```{r}
+# import data
+data = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1, -county_name, -state_abbr)
+
+set.seed(3)
+trRows <- createDataPartition(data$ale,
+                              p = .75,
+                              list = F)
+
+
+data[2,34] = NA
+x <- model.matrix(ale~., data)[,-1]
+x = x[match(rownames(data), rownames(x)),]
+
+n = dim(data)[2]
+for (i in 2 : n){
+  x[,names(data)[i]] = data[[i]]
+}
+rownames(x) = rownames(data)
+
+y <- data$ale
+
+
+#Train data
+x1<-as.matrix(x)[trRows,]
+y1<-data$ale[trRows]
+
+#Test data
+x2<-as.matrix(x)[-trRows,]
+y2<-data$ale[-trRows]
+```
+
+
+## `caret`
+
+```{r}
+ctrl <- trainControl(method = "cv")
+```
+
+
+### KNN
+
+```{r}
+set.seed(3)
+knn.fit <- train(x1, y1,
+                 method = "knn",
+                 tuneGrid = data.frame(k = seq(1,500,by = 5)),
+                 preProcess = c( "center", "scale", "knnImpute"),
+                 trControl = ctrl)
+
+model.knn$bestTune
+
+ggplot(model.knn)
+```
+
+### Boosting
+
+```{r}
+gbm.grid <- expand.grid(
+  n.trees = c(2000,2500,3000,3500,4000,4500,5000),
+  interaction.depth = 2:10, # in general, 10 is the maximum
+  shrinkage = c(0.001,0.003,0.005), 
+  n.minobsinnode = 1) # the minimum number of obs in your node
+
+set.seed(3)
+
+gbm.fit <- train(x1, y1,
+                 method = "gbm",
+                 tuneGrid = gbm.grid,
+                 trControl = ctrl,
+                 verbose = FALSE)
+
+ggplot(gbm.fit, highlight = T)
+
+summary(gbm.fit$finalModel, las = 2, cBars = 19, cex.names = 0.6)
+```
+
+

@@ -72,7 +72,7 @@ rpart.fit$bestTune
 
 predy2.rt <- predict(rpart.fit, newdata =x2)
 # test MSE
-mean((predy2.rt - y2)^2)
+mean((predy2.rt - y2)^2) # 0.764
 ```
 
 ## Bagging
@@ -94,7 +94,7 @@ bag.fit$bestTune
 
 predy2.bag <- predict(bag.fit, newdata =x2)
 # test MSE
-mean((predy2.bag - y2)^2)
+mean((predy2.bag - y2)^2) # 0.605
 ```
 
 ## Random Forest
@@ -116,7 +116,7 @@ rf.fit$bestTune
 
 predy2.rf <- predict(rf.fit, newdata =x2)
 # test MSE
-mean((predy2.rf - y2)^2)
+mean((predy2.rf - y2)^2) # 0.595
 ```
 
 ## least square
@@ -138,7 +138,8 @@ mean((predy2.lm - y2)^2)
 ```{r}
 set.seed(3)
 
-resamp <- resamples(list(bag = bag.fit, rt = rpart.fit, rf=rf.fit))
+resamp <- resamples(list(bag = bag.fit, rt = rpart.fit, rf=rf.fit)) 
+# regression tree:1.018, bagging: 0.859, rf:0.827
 summary(resamp)
 ```
 

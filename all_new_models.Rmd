@@ -468,10 +468,10 @@ pdp_gbm_5 <- gbm.fit4 %>%     # selected
        y = "Partial Dependence Function")
 
 pdp_gbm_6 <- gbm.fit4 %>%     # selected
-  partial(pred.var = "age_19_64", 
+  partial(pred.var = "population density", 
           grid.resolution = 100) %>%
   autoplot(rug = TRUE, train = x1) +
-  labs(x = "Percent with Age 19-64",
+  labs(x = "Population Density",
        y = "Partial Dependence Function")
 
 
@@ -500,7 +500,6 @@ ice_rf_1 <- rf.fit %>%
        y = "Predicted Average Life Expectancy",
        title = "rf, centered") 
 
-# ICE curve for Random Forest
 ice_rf_2 <- rf.fit %>% 
   partial(pred.var = "poverty", 
           grid.resolution = 100,
@@ -511,7 +510,6 @@ ice_rf_2 <- rf.fit %>%
        y = "Predicted Average Life Expectancy",
        title = "rf, centered") 
 
-# ICE curve for Random Forest
 ice_rf_3 <- rf.fit %>% 
   partial(pred.var = "no_hs_diploma", 
           grid.resolution = 100,
@@ -522,9 +520,8 @@ ice_rf_3 <- rf.fit %>%
        y = "Predicted Average Life Expectancy",
        title = "rf, centered") 
 
-# ICE curve for Random Forest
 ice_rf_4 <- rf.fit %>% 
-  partial(pred.var = "all_death", 
+  partial(pred.var = "disabled_medicare", 
           grid.resolution = 100,
           ice = TRUE) %>%
   autoplot(train = x1, alpha = .1,
@@ -533,9 +530,8 @@ ice_rf_4 <- rf.fit %>%
        y = "Predicted Average Life Expectancy",
        title = "rf, centered") 
 
-# ICE curve for Random Forest
 ice_rf_5 <- rf.fit %>% 
-  partial(pred.var = "all_death", 
+  partial(pred.var = "black", 
           grid.resolution = 100,
           ice = TRUE) %>%
   autoplot(train = x1, alpha = .1,
@@ -544,19 +540,79 @@ ice_rf_5 <- rf.fit %>%
        y = "Predicted Average Life Expectancy",
        title = "rf, centered") 
 
-# ICE curve for Random Forest
-ice_rf_1 <- rf.fit %>% 
+ice_rf_6 <- rf.fit %>% 
+  partial(pred.var = "health_status", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Health Status",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+grid.arrange(ice_rf_1,ice_rf_2,ice_rf_3,ice_rf_4,ice_rf_5,ice_rf_6, nrow = 2)
+```
+
+```{r}
+# ICE curve for Boosting
+ice_gbm_1 <- gbm.fit4 %>% 
   partial(pred.var = "all_death", 
           grid.resolution = 100,
           ice = TRUE) %>%
   autoplot(train = x1, alpha = .1,
            center = TRUE) +
   labs(x = "Death Rate",
-       y = "Predicted Average Life Expectancy",
-       title = "rf, centered") 
+       y = "Predicted Average Life Expectancy") 
 
-grid.arrange(poverty_ice, poverty_ice2, nrow = 1)
+ice_gbm_2 <- gbm.fit4 %>% 
+  partial(pred.var = "poverty", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent Poverty",
+       y = "Predicted Average Life Expectancy") 
+
+ice_gbm_3 <- gbm.fit4 %>% 
+  partial(pred.var = "black", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent Black",
+       y = "Predicted Average Life Expectancy")
+
+ice_gbm_4 <- gbm.fit4 %>% 
+  partial(pred.var = "population_size", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Population Size",
+       y = "Predicted Average Life Expectancy")
+
+ice_gbm_5 <- gbm.fit4 %>% 
+  partial(pred.var = "no_hs_diploma", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent with No High School Diploma",
+       y = "Predicted Average Life Expectancy") 
+
+ice_gbm_6 <- gbm.fit4 %>% 
+  partial(pred.var = "population_density", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Population Density",
+       y = "Predicted Average Life Expectancy") 
+
+grid.arrange(ice_gbm_1,ice_gbm_2,ice_gbm_3,ice_gbm_4,ice_gbm_5,ice_gbm_6, nrow = 2)
 ```
+
+
 
 ```{r}
 # Plot the features in an explanation: plot_features()
@@ -585,24 +641,45 @@ data_county_test = data_county_test %>%
 
 # Plot
 library(lime)
-# select the 5th county
-new_obs3 <- data_county_test[10, ] %>% 
+# select the 10th county: Lamar
+new_obs10 <- data_county_test[10, ] %>% 
   column_to_rownames("county") # row.names(new_obs) <- new_obs$county
+# random forest
+explainer.rf10 <- lime(data.frame(x1), rf.fit) # lime(predictors, model.fit)
+explanation.rf10 <- explain(new_obs10, explainer.rf10, n_features = 8) # n_features = 8 or 5
+rf_10 = plot_features(explanation.rf10) +
+  ggtitle("Random Forest")
+# boosting
+explainer.gbm10 <- lime(data.frame(x1), gbm.fit4) # lime(predictors, model.fit)
+explanation.gbm10 <- explain(new_obs10, explainer.gbm, n_features = 8) # n_features = 8 or 5
+gbm_10 = plot_features(explanation.gbm10) +
+  ggtitle("Boosting")
+# grid.arrange
+grid.arrange(rf_10, gbm_10, nrow = 1)
 
-
-explainer.gbm <- lime(data.frame(x1), gbm.fit4) # lime(predictors, model.fit)
-explanation.gbm <- explain(new_obs3, explainer.gbm, n_features = 8) # n_features可用 8 or 5
-rf_3 = plot_features(explanation.gbm)
-
-explainer.rf <- lime(data.frame(x1), rf.fit) # lime(predictors, model.fit)
-explanation.rf <- explain(new_obs3, explainer.gbm, n_features = 8) # n_features可用 8 or 5
-gbm_3 = plot_features(explanation.rf)
-
+# select the 10th county: Lamar
+# 10: Lamar in AL
+# 15: Montgomery in AL
+# 200: Guthrie in IA
+# 300: Clare in MI
+# 700: Fairfax in VA
+new_obs3 <- data_county_test[700, ] %>% 
+  column_to_rownames("county") # row.names(new_obs) <- new_obs$county
+# random forest
+explainer.rf3 <- lime(data.frame(x1), rf.fit) # lime(predictors, model.fit)
+explanation.rf3 <- explain(new_obs3, explainer.rf3, n_features = 8) # n_features = 8 or 5
+rf_3 = plot_features(explanation.rf3) +
+  ggtitle("Random Forest")
+# boosting
+explainer.gbm3 <- lime(data.frame(x1), gbm.fit4) # lime(predictors, model.fit)
+explanation.gbm3 <- explain(new_obs3, explainer.gbm, n_features = 8) # n_features = 8 or 5
+gbm_3 = plot_features(explanation.gbm3) +
+  ggtitle("Boosting")
+# grid.arrange
 grid.arrange(rf_3, gbm_3, nrow = 1)
 
 ```
 
-In this county (Clarke AL), if poverty > 16.3, then it has a negative effect on the prediction of ALE using boosting
 
 ```{r}
 set.seed(3)

@@ -422,7 +422,7 @@ pdp_rf_6 <- rf.fit %>%
 
 
 
-rf_pdp = grid.arrange(pdp_rf_1, pdp_rf_2, pdp_rf_3, pdp_rf_4, pdp_rf_5, pdp_rf_6, nrow = 2)
+grid.arrange(pdp_rf_1, pdp_rf_2, pdp_rf_3, pdp_rf_4, pdp_rf_5, pdp_rf_6, nrow = 2)
 
 
 ```
@@ -475,7 +475,7 @@ pdp_gbm_6 <- gbm.fit4 %>%     # selected
        y = "Partial Dependence Function")
 
 
-gbm_pdp = grid.arrange(pdp_gbm_1, pdp_gbm_2, pdp_gbm_3, pdp_gbm_4, pdp_gbm_5,pdp_gbm_6, nrow = 2)
+grid.arrange(pdp_gbm_1, pdp_gbm_2, pdp_gbm_3, pdp_gbm_4, pdp_gbm_5,pdp_gbm_6, nrow = 2)
 
 
 ```
@@ -586,13 +586,20 @@ data_county_test = data_county_test %>%
 # Plot
 library(lime)
 # select the 5th county
-new_obs <- data_county_test[5, ] %>% 
+new_obs3 <- data_county_test[10, ] %>% 
   column_to_rownames("county") # row.names(new_obs) <- new_obs$county
 
 
-explainer.gbm <- lime(data.frame(x1), gbm.fit) # lime(predictors, model.fit)
-explanation.gbm <- explain(new_obs, explainer.gbm, n_features = 8) # n_features可用 8 or 5
-plot_features(explanation.gbm)
+explainer.gbm <- lime(data.frame(x1), gbm.fit4) # lime(predictors, model.fit)
+explanation.gbm <- explain(new_obs3, explainer.gbm, n_features = 8) # n_features可用 8 or 5
+rf_3 = plot_features(explanation.gbm)
+
+explainer.rf <- lime(data.frame(x1), rf.fit) # lime(predictors, model.fit)
+explanation.rf <- explain(new_obs3, explainer.gbm, n_features = 8) # n_features可用 8 or 5
+gbm_3 = plot_features(explanation.rf)
+
+grid.arrange(rf_3, gbm_3, nrow = 1)
+
 ```
 
 In this county (Clarke AL), if poverty > 16.3, then it has a negative effect on the prediction of ALE using boosting
@@ -629,7 +636,7 @@ tibble(ls = lm_test,
        knn = knn_test,
        regression_test = rt_test,
        bagging = bagging_test,
-       random_forest = 0.584,
+       random_forest = rf_test,
        boosting = gbm_test4
 ) %>% 
   gather(key = "model", value = "test_MSE", ls:boosting)

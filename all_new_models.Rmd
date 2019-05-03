@@ -486,7 +486,7 @@ The PDP plots above displays the average change in predicted ALE as we vary each
 
 [PDP interpretation example](https://christophm.github.io/interpretable-ml-book/pdp.html)
 
-[ICE interpretation example](https://christophm.github.io/interpretable-ml-book/pdp.html)
+[ICE interpretation example](https://christophm.github.io/interpretable-ml-book/ice.html#ice)
 
 ```{r}
 # ICE curve for Random Forest

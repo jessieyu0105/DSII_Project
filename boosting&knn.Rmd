@@ -18,6 +18,10 @@ library(pls)
 
 library(pdp)
 library(earth)
+library(ranger)
+
+theme_set(theme_bw())
+options(scipen = 200) # do not use scientific notation
 ```
 
 ```{r}
@@ -74,17 +78,14 @@ ridge.fit <- train(x1, y1,
 
 plot(ridge.fit, xTrans = function(x1) log(x1)) 
 
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
-
 ridge.fit$bestTune
 
 coef_ridge = coef(ridge.fit$finalModel,ridge.fit$bestTune$lambda)
 head(coef_ridge)
 
-pred_rg = predict(ridge.fit$finalModel, s = ridge.fit$bestTune$lambda, newx = predict(trans, x2),
-                  type = "response")
 # test MSE
-mean((pred_rg - y2)^2)
+pred_rg = predict(ridge.fit, newdata = x2)
+ridge_test = mean((pred_rg - y2)^2)
 ```
 
 ### Lasso
@@ -109,10 +110,9 @@ coef_lasso =
 nrow(summary(coef_lasso))
 # There are 15 non-zero coefficient estimates
 
-predy2.lasso <- predict(lasso.fit$finalModel, newx = predict(trans,x2), 
-                        s = lasso.fit$bestTune$lambda, type = "response")
 # test MSE
-mean((predy2.lasso - y2)^2)
+pred_lasso <- predict(lasso.fit, newdata = x2)
+lasso_test = mean((pred_lasso - y2)^2)
 ```
 
 Obtain the number of non-zero coefficient estimates:
@@ -142,6 +142,10 @@ lm.fit <- train(x1, y1,
                 method = "lm",
                 preProcess = c("center", "scale", "knnImpute"),
                 trControl = ctrl)
+
+# test MSE
+pred_lm <- predict(lm.fit, newdata = x2)
+lm_test = mean((pred_lm - y2)^2)
 ```
 
 ### PCR
@@ -157,14 +161,12 @@ pcr.fit <- train(x1, y1,
                  trControl = ctrl)
 
 
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
-
-
-
-predy2.pcr = predict(pcr.fit$finalModel, newdata = predict(trans, x2), ncomp = pcr.fit$bestTune$ncomp)
-# test MSE
-mean((predy2.pcr - y2)^2)
 ggplot(pcr.fit, highlight = TRUE)+ theme_bw()
+
+
+# test MSE
+pred_pcr = predict(pcr.fit, newdata = x2)
+pcr_test = mean((pred_pcr - y2)^2)
 ```
 
 ### PLS
@@ -182,10 +184,11 @@ pls.fit <- train(x1, y1,
 trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
 summary(pls.fit)
 
-predy2.pls = predict(pls.fit$finalModel, newdata = predict(trans, x2), ncomp = pls.fit$bestTune$ncomp)
-# test MSE
-mean((predy2.pls - y2)^2)
 ggplot(pls.fit, highlight = TRUE)+ theme_bw()
+
+# test MSE
+pred_pls = predict(pls.fit, newdata = x2)
+pls_test = mean((pred_pls - y2)^2)
 ```
 
 ### GAM
@@ -201,6 +204,10 @@ gam.fit <- train(x, y,
 summary(gam.fit)
 gam.fit$bestTune
 plot(gam.fit$finalModel, pages = 4)
+
+# test MSE
+pred_gam = predict(gam.fit, newdata = x2)
+gam_test = mean((pred_gam - y2)^2)
 ```
 
 ### MARS1
@@ -223,6 +230,11 @@ summary(mars.fit)
 mars.fit$bestTune
 
 coef(mars.fit$finalModel)
+
+# test MSE
+pred_mars = predict(mars.fit, newdata = x2)
+# test MSE
+mars_test = mean((pred_mars - y2)^2)
 ```
 
 ### KNN
@@ -246,14 +258,78 @@ knn.fit$bestTune
 ggplot(knn.fit)
 
 # test MSE
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
-pred.knn = predict(knn.fit$finalModel, 
-                   k = knn.fit$bestTune$k, 
-                   newdata = predict(trans, x2),
-                   type = "response")
-mean((pred.knn - y2)^2)
+pred.knn = predict(knn.fit, newdata = x2)
+knn_test = mean((pred.knn - y2)^2)
 ```
 
+## Regression Tree
+
+```{r}
+set.seed(3)
+# tune over cp, method = "rpart"
+rpart.fit <- train(x1, y1, 
+                   method = "rpart",
+                   tuneGrid = data.frame(cp = exp(seq(-9,-5, length = 20))), # (-6,-4), (-9,-5)
+                   preProcess = c( "center", "scale", "knnImpute"),
+                   trControl = ctrl)
+ggplot(rpart.fit, highlight = TRUE)
+rpart.plot(rpart.fit$finalModel)
+rpart.fit$bestTune
+
+# test MSE
+predy2.rt <- predict(rpart.fit, newdata =x2)
+rt_test = mean((predy2.rt - y2)^2) # 0.764
+```
+
+## Bagging
+
+```{r}
+bag.grid <- expand.grid(mtry = 33,
+                       splitrule = "variance",
+                       min.node.size = 1:15)
+set.seed(3)
+bag.fit <- train(x1, y1, 
+                method = "ranger",
+                tuneGrid = bag.grid,
+                preProcess = c( "center", "scale", "knnImpute"),
+                trControl = ctrl)
+
+ggplot(bag.fit, highlight = TRUE)
+
+bag.fit$bestTune
+
+# test MSE
+predy2.bag <- predict(bag.fit, newdata =x2)
+bagging_test = mean((predy2.bag - y2)^2) # 0.605
+```
+
+## Random Forest
+
+```{r}
+rf.grid <- expand.grid(mtry = 1:33,
+                       splitrule = "variance",
+                       min.node.size = 1:15)
+set.seed(3)
+rf.fit <- train(x1, y1, 
+                method = "ranger",
+                tuneGrid = rf.grid,
+                preProcess = c( "center", "scale", "knnImpute"), 
+                importance = "impurity",
+                trControl = ctrl)
+
+ggplot(rf.fit, highlight = TRUE)
+
+rf.fit$bestTune
+
+barplot(sort(ranger::importance(rf.fit$finalModel), decreasing = FALSE),
+        las = 2, horiz = TRUE, cex.names = 0.7,
+        col = colorRampPalette(colors = c("darkred","white","darkblue"))(33))
+
+
+# test MSE
+pred_rf <- predict(rf.fit, newdata = x2)
+rf_test = mean((pred_rf - y2)^2) # 0.595
+```
 
 ### Boosting
 
@@ -269,64 +345,296 @@ mean((pred.knn - y2)^2)
 #    n.trees interaction.depth shrinkage n.minobsinnode
 #      4500                10     0.003              1
 
-
-### 2nd attempt ###
-# gbm.grid <- expand.grid(  
-#   n.trees = c(4300,4500,4700,4900,5100,5300,5500), # number of trees
-#   interaction.depth = 9:15, # number of splits d in each tree
-#   shrinkage = c(0.003,0.004,0.005), # learnig rate 
-#   n.minobsinnode = 1) # the minimum number of obs in your node
-
-# gbm.fit$bestTune
-#   n.trees interaction.depth shrinkage n.minobsinnode
-#      4700                14     0.004             1
-
-### 3rd attempt ###
-gbm.grid <- expand.grid(  
+gbm.grid4 <- expand.grid(  
   n.trees = seq(4300, 5000, by = 100), # number of trees
   interaction.depth = 8:16, # number of splits d in each tree
-  shrinkage = c(0.003, 0.004, 0.005), # learnig rate 
+  shrinkage = c(0.003, 0.004, 0.005), # learnig rate              
   n.minobsinnode = 1) # the minimum number of obs in your node
 
 set.seed(3)
 
-gbm.fit <- train(x1, y1,
+gbm.fit4 <- train(x1, y1,
                  method = "gbm",
-                 tuneGrid = gbm.grid, 
-                 trControl = ctrl,
+                 tuneGrid = gbm.grid4, 
+                 trControl = ctrl, 
+                 preProcess = c("center", "scale", "knnImpute"),  
                  verbose = FALSE)
 
-gbm.fit$bestTune
+gbm.fit4$bestTune
 
-ggplot(gbm.fit, highlight = T)
+ggplot(gbm.fit4, highlight = T)
 
-summary(gbm.fit$finalModel, las = 2, cBars = 33, cex.names = 0.6)
+summary(gbm.fit4$finalModel, las = 2, cBars = 33, cex.names = 0.6)
 
 # test MSE
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
-pred.gbm = predict(gbm.fit$finalModel, 
-                   n.trees = gbm.fit$bestTune$n.trees, 
-                   interaction.depth = gbm.fit$bestTune$interaction.depth,
-                   shrinkage = gbm.fit$bestTune$shrinkage,
-                   newdata = predict(trans, x2),
-                   type = "response")
-mean((pred.gbm - y2)^2) # 6.551068
+pred.gbm4 = predict(gbm.fit4, newdata = x2)
+
+gbm_test4 = mean((pred.gbm4 - y2)^2) 
+
 ```
 
 ```{r}
+# Partial Dependence Plot (PDP) for Random Forest
+
+pdp_df <- data.frame(x1, ale = y1)
+
+pdp_rf_1 <- rf.fit %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Death Rate",
+       y = "Partial Dependence Function")
+
+pdp_rf_2 <- rf.fit %>%          # selected
+  partial(pred.var = "poverty", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Poverty",
+       y = "Partial Dependence Function") 
+
+pdp_rf_3 <- rf.fit %>%     # selected
+  partial(pred.var = "no_hs_diploma", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent with No High School Diploma",
+       y = "Partial Dependence Function")
+
+pdp_rf_4 <- rf.fit %>%     # selected
+  partial(pred.var = "disabled_medicare", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Medicare Based on Disability",
+       y = "Partial Dependence Function")
+
+pdp_rf_5 <- rf.fit %>% 
+  partial(pred.var = "black", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Black",
+       y = "Partial Dependence Function")
+
+pdp_rf_6 <- rf.fit %>% 
+  partial(pred.var = "health_status", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Health Status",
+       y = "Partial Dependence Function")
+
+
+
+rf_pdp = grid.arrange(pdp_rf_1, pdp_rf_2, pdp_rf_3, pdp_rf_4, pdp_rf_5, pdp_rf_6, nrow = 2)
+
+
+```
+
+```{r}
+# Partial Dependence Plot (PDP) for Boosting
+
+pdp_df <- data.frame(x1, ale = y1)
+
+pdp_gbm_1 <- gbm.fit4 %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Death Rate",
+       y = "Partial Dependence Function")
+
+pdp_gbm_2 <- gbm.fit4 %>%          # selected
+  partial(pred.var = "poverty", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Poverty",
+       y = "Partial Dependence Function") 
+
+pdp_gbm_3 <- gbm.fit4 %>% 
+  partial(pred.var = "black", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Black",
+       y = "Partial Dependence Function")
+
+pdp_gbm_4 <- gbm.fit4 %>% 
+  partial(pred.var = "population_size", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Population Size",
+       y = "Partial Dependence Function")
+
+pdp_gbm_5 <- gbm.fit4 %>%     # selected
+  partial(pred.var = "no_hs_diploma", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent with No High School Diploma",
+       y = "Partial Dependence Function")
+
+pdp_gbm_6 <- gbm.fit4 %>%     # selected
+  partial(pred.var = "age_19_64", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent with Age 19-64",
+       y = "Partial Dependence Function")
+
+
+gbm_pdp = grid.arrange(pdp_gbm_1, pdp_gbm_2, pdp_gbm_3, pdp_gbm_4, pdp_gbm_5,pdp_gbm_6, nrow = 2)
+
+
+```
+
+The influence of the difference features on the predicted average life expectancy is visualized in the above figures.
+
+The PDP plots above displays the average change in predicted ALE as we vary each variable while holding all other variables constant. 
+
+[PDP interpretation example](https://christophm.github.io/interpretable-ml-book/pdp.html)
+
+[ICE interpretation example](https://christophm.github.io/interpretable-ml-book/pdp.html)
+
+```{r}
+# ICE curve for Random Forest
+ice_rf_1 <- rf.fit %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Death Rate",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+# ICE curve for Random Forest
+ice_rf_2 <- rf.fit %>% 
+  partial(pred.var = "poverty", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent Poverty",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+# ICE curve for Random Forest
+ice_rf_3 <- rf.fit %>% 
+  partial(pred.var = "no_hs_diploma", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent with No High School Diploma",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+# ICE curve for Random Forest
+ice_rf_4 <- rf.fit %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent Medicare Based on Disability",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+# ICE curve for Random Forest
+ice_rf_5 <- rf.fit %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Percent Black",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+# ICE curve for Random Forest
+ice_rf_1 <- rf.fit %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100,
+          ice = TRUE) %>%
+  autoplot(train = x1, alpha = .1,
+           center = TRUE) +
+  labs(x = "Death Rate",
+       y = "Predicted Average Life Expectancy",
+       title = "rf, centered") 
+
+grid.arrange(poverty_ice, poverty_ice2, nrow = 1)
+```
+
+```{r}
+# Plot the features in an explanation: plot_features()
+
+# remain the county_name for data
+data_county = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1) 
+
+data_county_test <- data_county[-trRows, ]
+
+# Check: if there are duplicate county
+data_county_test %>% 
+  group_by(county_name) %>% 
+  count() %>% 
+  arrange(desc(n)) # some state have counties with the same name
+
+data_county_test %>% 
+  group_by(county_name, state_abbr) %>% 
+  count() %>% 
+  arrange(desc(n)) 
+
+data_county_test$county <- paste(data_county_test$county_name, data_county_test$state_abbr)
+
+data_county_test = data_county_test %>% 
+  select(-county_name, -state_abbr, -ale)
+
+# Plot
+library(lime)
+# select the 5th county
+new_obs <- data_county_test[5, ] %>% 
+  column_to_rownames("county") # row.names(new_obs) <- new_obs$county
+
+
+explainer.gbm <- lime(data.frame(x1), gbm.fit) # lime(predictors, model.fit)
+explanation.gbm <- explain(new_obs, explainer.gbm, n_features = 8) # n_features可用 8 or 5
+plot_features(explanation.gbm)
+```
+
+In this county (Clarke AL), if poverty > 16.3, then it has a negative effect on the prediction of ALE using boosting
+
+```{r}
 set.seed(3)
+
 
 resamp <- resamples(list(ls = lm.fit,
                          ridge = ridge.fit, 
                          lasso = lasso.fit, 
                          pcr = pcr.fit,
-                         pls = pls.fit,   # 缺gam
+                         pls = pls.fit,   
+                         gam = gam.fit,
                          mars = mars.fit,
                          knn = knn.fit,
-                         boosting = gbm.fit))
-
+                         regression_tree = rpart.fit,
+                         bagging = bag.fit,
+                         random_forest = rf.fit,
+                         boosting = gbm.fit4))
 
 summary(resamp)
 ```
+
+```{r}
+# Compare test MSE
+tibble(ls = lm_test,
+       ridge = ridge_test,
+       lasso = lasso_test,
+       pcr = pcr_test,
+       pls = pls_test,
+       gam = gam_test,
+       mars = mars_test, 
+       knn = knn_test,
+       regression_test = rt_test,
+       bagging = bagging_test,
+       random_forest = 0.584,
+       boosting = gbm_test4
+) %>% 
+  gather(key = "model", value = "test_MSE", ls:boosting)
+```
+
+
 
 

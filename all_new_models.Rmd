@@ -397,14 +397,8 @@ pdp_rf_3 <- rf.fit %>%     # selected
           grid.resolution = 100) %>%
   autoplot(rug = TRUE, train = x1) +
   labs(x = "Percent with No High School Diploma",
-       y = "Partial Dependence Function")
-
-pdp_rf_4 <- rf.fit %>%     # selected
-  partial(pred.var = "disabled_medicare", 
-          grid.resolution = 100) %>%
-  autoplot(rug = TRUE, train = x1) +
-  labs(x = "Percent Medicare Based on Disability",
-       y = "Partial Dependence Function")
+       y = "Partial Dependence Function",
+       title = "Random Forest")
 
 pdp_rf_5 <- rf.fit %>% 
   partial(pred.var = "black", 
@@ -422,7 +416,7 @@ pdp_rf_6 <- rf.fit %>%
 
 
 
-grid.arrange(pdp_rf_1, pdp_rf_2, pdp_rf_3, pdp_rf_4, pdp_rf_5, pdp_rf_6, nrow = 2)
+grid.arrange(pdp_rf_1, pdp_rf_2, pdp_rf_3, pdp_rf_5, pdp_rf_6, nrow = 2)
 
 
 ```
@@ -465,7 +459,8 @@ pdp_gbm_5 <- gbm.fit4 %>%     # selected
           grid.resolution = 100) %>%
   autoplot(rug = TRUE, train = x1) +
   labs(x = "Percent with No High School Diploma",
-       y = "Partial Dependence Function")
+       y = "Partial Dependence Function",
+       title = "Boosting")
 
 pdp_gbm_6 <- gbm.fit4 %>%     # selected
   partial(pred.var = "population density", 
@@ -475,9 +470,11 @@ pdp_gbm_6 <- gbm.fit4 %>%     # selected
        y = "Partial Dependence Function")
 
 
-grid.arrange(pdp_gbm_1, pdp_gbm_2, pdp_gbm_3, pdp_gbm_4, pdp_gbm_5,pdp_gbm_6, nrow = 2)
+grid.arrange(pdp_gbm_1, pdp_gbm_2, pdp_gbm_3, pdp_gbm_4, pdp_gbm_5, nrow = 2)
 
-
+grid.arrange(pdp_rf_3, pdp_gbm_5, nrow = 2) # no_hs_diploma
+grid.arrange(pdp_rf_2, pdp_gbm_2, nrow = 2) # poverty
+grid.arrange(pdp_rf_5, pdp_gbm_3, nrow = 2) # black
 ```
 
 The influence of the difference features on the predicted average life expectancy is visualized in the above figures.
@@ -550,7 +547,7 @@ ice_rf_6 <- rf.fit %>%
        y = "Predicted Average Life Expectancy",
        title = "rf, centered") 
 
-grid.arrange(ice_rf_1,ice_rf_2,ice_rf_3,ice_rf_4,ice_rf_5,ice_rf_6, nrow = 2)
+grid.arrange(ice_rf_1,ice_rf_2,ice_rf_3,ice_rf_5,ice_rf_6, nrow = 2)
 ```
 
 ```{r}
@@ -600,16 +597,7 @@ ice_gbm_5 <- gbm.fit4 %>%
   labs(x = "Percent with No High School Diploma",
        y = "Predicted Average Life Expectancy") 
 
-ice_gbm_6 <- gbm.fit4 %>% 
-  partial(pred.var = "population_density", 
-          grid.resolution = 100,
-          ice = TRUE) %>%
-  autoplot(train = x1, alpha = .1,
-           center = TRUE) +
-  labs(x = "Population Density",
-       y = "Predicted Average Life Expectancy") 
-
-grid.arrange(ice_gbm_1,ice_gbm_2,ice_gbm_3,ice_gbm_4,ice_gbm_5,ice_gbm_6, nrow = 2)
+grid.arrange(ice_gbm_1,ice_gbm_2,ice_gbm_3,ice_gbm_4,ice_gbm_5, nrow = 2)
 ```
 
 

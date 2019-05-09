@@ -71,20 +71,5 @@ fviz_dend(hc.complete, k = 5,
           rect = TRUE, rect_fill = TRUE, rect_border = "jco")
 
 ind.complete <- cutree(hc.complete, 5)
-
-# states belong to cluster 1:
-dat1[ind.complete == 1,] %>% rownames() 
-
-# states belong to cluster 2:
-dat1[ind.complete == 2,] %>% rownames()
-
-# states belong to cluster 3:
-dat1[ind.complete == 3,] %>% rownames()
-
-# states belong to cluster 4:
-dat1[ind.complete == 4,] %>% rownames()
-
-# states belong to cluster 5:
-dat1[ind.complete == 5,] %>% rownames()
 ```
 

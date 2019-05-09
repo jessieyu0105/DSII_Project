@@ -1,11 +1,16 @@
 ---
 title: "Unsupervised"
 author: Shuwei Liu
-output: github_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = F,
+  warning = F
+  ) 
+
 library(tidyverse)
 library(glmnet)
 library(plotmo)
@@ -26,10 +31,20 @@ data = read_csv("./data/dataset.final.csv") %>%
   group_by(state_abbr) %>% 
   summarise_all(funs(mean))
 
+state <- data.frame(state_abbr = state.abb,
+                    state_name = state.name)
 
-dat1 <- data[,2:35]
-dat1 <- scale(dat1)
-rownames(dat1) <- data$state_abbr
+data = left_join(data, state, by = "state_abbr") %>% 
+  select(state_abbr, state_name, ale, everything()) %>% 
+  # state_name is factor
+  mutate(state_name = as.character(state_name)) 
+
+data$state_name[is.na(data$state_name)] <- "District of Columbia"
+
+
+dat1 <- data[,3:36]
+dat1 <- scale(dat1) # scaled
+rownames(dat1) <- data$state_name
 ```
 
 ```{r}
@@ -39,7 +54,7 @@ col2 <- colorRampPalette(brewer.pal(3, "Spectral"))(2)
 heatmap.2(t(dat1), 
           col = col1, keysize=.8, key.par = list(cex=.5),
           trace = "none", key = TRUE, cexCol = 0.75, 
-          labCol = as.character(data$county_name),
+          labCol = as.character(data$state_abbr),
           margins = c(10, 10))
 ```
 
@@ -54,5 +69,22 @@ fviz_dend(hc.complete, k = 5,
           palette = "jco", 
           color_labels_by_k = TRUE,
           rect = TRUE, rect_fill = TRUE, rect_border = "jco")
+
+ind.complete <- cutree(hc.complete, 5)
+
+# states belong to cluster 1:
+dat1[ind.complete == 1,] %>% rownames() 
+
+# states belong to cluster 2:
+dat1[ind.complete == 2,] %>% rownames()
+
+# states belong to cluster 3:
+dat1[ind.complete == 3,] %>% rownames()
+
+# states belong to cluster 4:
+dat1[ind.complete == 4,] %>% rownames()
+
+# states belong to cluster 5:
+dat1[ind.complete == 5,] %>% rownames()
 ```
 

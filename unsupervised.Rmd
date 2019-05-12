@@ -1,15 +1,16 @@
 ---
 title: "Unsupervised"
 author: Shuwei Liu
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  message = F,
-  warning = F
-  ) 
+  message = FALSE,
+  warning = FALSE,
+  echo = FALSE
+)
 
 library(tidyverse)
 library(glmnet)
@@ -48,22 +49,8 @@ rownames(dat1) <- data$state_name
 ```
 
 ```{r}
-col1 <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
-col2 <- colorRampPalette(brewer.pal(3, "Spectral"))(2)
-
-heatmap.2(t(dat1), 
-          col = col1, keysize=.8, key.par = list(cex=.5),
-          trace = "none", key = TRUE, cexCol = 0.75, 
-          labCol = as.character(data$state_abbr),
-          margins = c(10, 10))
-```
-
-
-```{r}
 hc.complete <- hclust(dist(dat1), method = "complete")
-```
 
-```{r}
 fviz_dend(hc.complete, k = 5,        
           cex = 0.5, 
           palette = "jco", 
@@ -71,5 +58,16 @@ fviz_dend(hc.complete, k = 5,
           rect = TRUE, rect_fill = TRUE, rect_border = "jco")
 
 ind.complete <- cutree(hc.complete, 5)
+```
+
+```{r fig.width = 15, fig.height = 15}
+col1 <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
+col2 <- colorRampPalette(brewer.pal(3, "Spectral"))(2)
+
+heatmap.2(t(dat1), 
+          col = col1, keysize=.8, key.par = list(cex=.5),
+          trace = "none", key = TRUE, cexCol = 0.75, 
+          labCol = as.character(row.names(dat1)),
+          margins = c(10, 10))
 ```
 

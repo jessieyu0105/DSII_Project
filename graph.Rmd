@@ -27,7 +27,11 @@ library(earth)
 
 library(corrplot)
 
+library(ranger)
+
 theme_set(theme_bw() + theme(legend.position = "bottom"))
+
+options(scipen = 200) # do not use scientific notation
 
 ```
 
@@ -90,78 +94,43 @@ table_1 = data %>%
   knitr::kable()
 ```
 
-|Variable (Per County)                    |NAs  |N    |Mean     |Std. Dev. |1st Quartile |Median |3rd Quartile |
-|:----------------------------------------|:----|:----|:--------|:---------|:------------|:------|:------------|
-|Average Life Expectancy                  |0    |3139 |76.32    |2         |75           |76.5   |77.7         |
-|Population Density                       |1    |3139 |250.07   |1703.27   |17           |44     |109.75       |
-|Population Size                          |0    |3139 |94427.06 |306520.4  |11220        |25270  |64111        |
-|Percent with Age <19                     |0    |3139 |24.81    |3.28      |22.7         |24.6   |26.4         |
-|Percent with Age 19-64                   |0    |3139 |60.28    |3.35      |58.3         |60.3   |62.3         |
-|Percent with Age 65-84                   |0    |3139 |12.79    |3.33      |10.7         |12.5   |14.7         |
-|Percent with Age 85+                     |0    |3139 |2.12     |0.95      |1.5          |1.9    |2.6          |
-|Percent White                            |0    |3139 |87.04    |16.14     |82.8         |94.1   |97.6         |
-|Percent Black                            |0    |3139 |8.99     |14.55     |0.5          |2.1    |10.3         |
-|Percent Native American                  |0    |3139 |1.95     |7.62      |0.2          |0.4    |0.9          |
-|Percent Asian                            |0    |3139 |1.12     |2.76      |0.3          |0.5    |1            |
-|Percent Hispanic                         |0    |3139 |7.02     |12.47     |1.1          |2.3    |6.3          |
-|Death Rate                               |3    |3139 |905.64   |131.21    |814.25       |898.6  |989.8        |
-|Percent with Health Status               |662  |3139 |17.32    |6.09      |12.9         |16.4   |20.9         |
-|Number of Monthly Unhealthy Days         |0    |3139 |0.019    |0.36      |0.021        |0.025  |0.03         |
-|Percent not Exercising                   |933  |3139 |26.51    |6.7       |21.9         |26     |30.8         |
-|Percent with Few Fruits or Vegetables    |1235 |3139 |78.92    |5.16      |75.5         |79     |82.4         |
-|Percent Obese                            |915  |3139 |24.15    |4.9       |21.1         |24.3   |27.2         |
-|Percent with High Blood Pressure         |1617 |3139 |26.48    |5.44      |22.8         |26.2   |29.9         |
-|Percent Smoking                          |872  |3139 |23.11    |5.73      |19.4         |23     |26.7         |
-|Percent with Diabetes                    |420  |3139 |7.81     |2.76      |5.9          |7.5    |9.45         |
-|Physician Rate                           |0    |3139 |57.6     |44.78     |30.55        |50.6   |74.7         |
-|Dentist Rate                             |1    |3139 |32.19    |21.5      |18.7         |30     |43.3         |
-|Percent Poverty                          |1    |3139 |13.35    |4.88      |9.8          |12.6   |16.2         |
-|Percent Unemployed                       |543  |3139 |6.11     |1.34      |5.2          |6      |6.8          |
-|Percent Uninsured                        |0    |3139 |0.14     |0.36      |0.11         |0.13   |0.17         |
-|Percent Medicare Based on Disability     |0    |3139 |-0.017   |0.79      |0.017        |0.023  |0.031        |
-|Percent Medicare Based on Elderly Status |0    |3139 |0.098    |0.8       |0.11         |0.14   |0.17         |
-|Percent with Major Depression            |0    |3139 |0.061    |0.0066    |0.056        |0.059  |0.065        |
-|Percent with No High School Diploma      |0    |3139 |0.15     |0.058     |0.11         |0.14   |0.19         |
-|Percent with Recent Drug Use             |0    |3139 |0.052    |0.011     |0.045        |0.051  |0.057        |
-|Percent Severely Disabled                |0    |3139 |0.025    |0.062     |0.02         |0.027  |0.034        |
+|Variable (Per County)                    |NAs  |Mean     |Std. Dev. |1st Quartile |Median |3rd Quartile |
+|:----------------------------------------|:----|:--------|:---------|:------------|:------|:------------|
+|Average Life Expectancy                  |0    |76.32    |2         |75           |76.5   |77.7         |
+|Population Density                       |1    |250.07   |1703.27   |17           |44     |109.75       |
+|Population Size                          |0    |94427.06 |306520.4  |11220        |25270  |64111        |
+|Percent with Age <19                     |0    |24.81    |3.28      |22.7         |24.6   |26.4         |
+|Percent with Age 19-64                   |0    |60.28    |3.35      |58.3         |60.3   |62.3         |
+|Percent with Age 65-84                   |0    |12.79    |3.33      |10.7         |12.5   |14.7         |
+|Percent with Age 85+                     |0    |2.12     |0.95      |1.5          |1.9    |2.6          |
+|Percent White                            |0    |87.04    |16.14     |82.8         |94.1   |97.6         |
+|Percent Black                            |0    |8.99     |14.55     |0.5          |2.1    |10.3         |
+|Percent Native American                  |0    |1.95     |7.62      |0.2          |0.4    |0.9          |
+|Percent Asian                            |0    |1.12     |2.76      |0.3          |0.5    |1            |
+|Percent Hispanic                         |0    |7.02     |12.47     |1.1          |2.3    |6.3          |
+|Death Rate                               |3    |905.64   |131.21    |814.25       |898.6  |989.8        |
+|Percent with Health Status               |662  |17.32    |6.09      |12.9         |16.4   |20.9         |
+|Number of Monthly Unhealthy Days         |0    |0.019    |0.36      |0.021        |0.025  |0.03         |
+|Percent not Exercising                   |933  |26.51    |6.7       |21.9         |26     |30.8         |
+|Percent with Few Fruits or Vegetables    |1235 |78.92    |5.16      |75.5         |79     |82.4         |
+|Percent Obese                            |915  |24.15    |4.9       |21.1         |24.3   |27.2         |
+|Percent with High Blood Pressure         |1617 |26.48    |5.44      |22.8         |26.2   |29.9         |
+|Percent Smoking                          |872  |23.11    |5.73      |19.4         |23     |26.7         |
+|Percent with Diabetes                    |420  |7.81     |2.76      |5.9          |7.5    |9.45         |
+|Physician Rate                           |0    |57.6     |44.78     |30.55        |50.6   |74.7         |
+|Dentist Rate                             |1    |32.19    |21.5      |18.7         |30     |43.3         |
+|Percent Poverty                          |1    |13.35    |4.88      |9.8          |12.6   |16.2         |
+|Percent Unemployed                       |543  |6.11     |1.34      |5.2          |6      |6.8          |
+|Percent Uninsured                        |0    |14.0     |3.60      |11.1         |13.2   |17.0         |
+|Percent Medicare Based on Disability     |0    |2.50     |0.79      |1.70         |2.30   |3.10         |
+|Percent Medicare Based on Elderly Status |0    |9.80     |0.8       |11.0         |14.2   |17.1         |
+|Percent with Major Depression            |0    |6.15     |0.66      |5.60         |5.90   |6.50         |
+|Percent with No High School Diploma      |0    |15.0     |5.81      |11.3         |14.0   |19.2         |
+|Percent with Recent Drug Use             |0    |5.21     |1.12      |4.55         |5.12   |5.73         |
+|Percent Severely Disabled                |0    |2.56     |0.62      |2.03         |2.70   |3.46         |
 
 </br>
 </br>
-
-### Table 2: Non-zero Coefficient Estimates Generated from the LASSO
-
-|Term                                  | Coefficient|
-|:-------------------------------------|-----------:|
-|(Intercept)                           |  76.3507985|
-|Percent Poverty                       |  -0.2536480|
-|Percent with Age 85+                  |   0.0406592|
-|Percent Black                         |  -0.3392134|
-|Percent Asian                         |   0.0104569|
-|Percent Hispanic                      |   0.1109014|
-|Death Rate                            |  -0.9844879|
-|Percent with Poor Health Status       |  -0.0751028|
-|Percent not Exercise                  |  -0.0916798|
-|Percent with High Blood Pres          |  -0.1078510|
-|Percent Smoking                       |  -0.1219687|
-|Dentist Rate                          |   0.0726649|
-|Percent Uninsured                     |  -0.1765169|
-|Percent with No High School Diploma   |  -0.1306445|
-|Percnet with Recent Drug Use          |   0.0078570|
-
-</br>
-</br>
-
-### Table 3: Model Comparison by Root Mean Square Error (RMSE)
-
-|Model          | Mean RMSE| Variance RMSE| 1st Quantile| Median RMSE| 3rd Quantile|
-|:--------------|---------:|-------------:|------------:|-----------:|------------:|
-|LASSO          |    0.9036|        0.0153|       0.8276|      0.8815|       0.9710|
-|MARS           |    0.9275|        0.0354|       0.8253|      0.8770|       0.9864|
-|PCR            |    0.9340|        0.0248|       0.8388|      0.8862|       1.0148|
-|PLS            |    1.0197|        0.1213|       0.8570|      0.8939|       1.0433|
-|Ridge          |    1.2747|        1.2216|       0.8526|      0.9067|       1.0511|
-|Least Squares  |    1.3862|        2.3430|       0.8218|      0.8839|       1.0552|
-|GAM            |    1.5669|        3.3358|       0.8615|      1.0320|       1.2608|
 
 ```{r}
 set.seed(3)
@@ -194,30 +163,45 @@ y2<-data$ale[-trRows]
 ```{r}
 ## `caret`
 
+ctrl <- trainControl(method = "cv")
+```
+
+```{r}
+### Least Square
+set.seed(3)
+
+ls.fit <- train(x1, y1,
+                method = "lm",
+                preProcess = c("center", "scale", "knnImpute"),
+                trControl = ctrl)
+
+# test MSE
+pred_ls <- predict(ls.fit, newdata = x2)
+ls_test = mean((pred_ls - y2)^2)
+```
+
+```{r}
 ### Ridge
 
 set.seed(3)
-ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+
 ridge.fit <- train(x1, y1,
-                     method = "glmnet",
-                     tuneGrid = expand.grid(alpha = 0,  
-                                            lambda = exp(seq(-5, 2, length=200))),
+                   method = "glmnet",
+                   tuneGrid = expand.grid(alpha = 0,
+                                          lambda = exp(seq(-5, 2, length=200))),
                    preProcess = c( "center", "scale", "knnImpute"),
-                     trControl = ctrl1)
+                   trControl = ctrl)
 
-# plot(ridge.fit, xTrans = function(x1) log(x1)) 
-
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+ridge_tuning <- plot(ridge.fit, xTrans = function(x1) log(x1)) 
 
 # ridge.fit$bestTune
 
 coef_ridge = coef(ridge.fit$finalModel,ridge.fit$bestTune$lambda)
 # head(coef_ridge)
 
-pred_rg = predict(ridge.fit$finalModel, s = ridge.fit$bestTune$lambda, newx = predict(trans, x2),
-                  type = "response")
 # test MSE
-# mean((pred_rg - y2)^2)
+pred_rg = predict(ridge.fit, newdata = x2)
+ridge_test = mean((pred_rg - y2)^2)
 ```
 
 
@@ -230,23 +214,21 @@ lasso.fit <- train(x1, y1,
                    tuneGrid = expand.grid(alpha = 1, 
                                           lambda = exp(seq(-4, -1, length=200))),
                    preProcess = c("center", "scale", "knnImpute"),
-                   trControl = ctrl1)
+                   trControl = ctrl)
 
-plot_2 = plot(lasso.fit, xTrans = function(x1) log(x1))
+lasso_tuning <- plot(lasso.fit, xTrans = function(x1) log(x1))
 
 trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
 
 coef_lasso = 
   predict(lasso.fit$finalModel, newx =  predict(trans,x2), 
-                        s = lasso.fit$bestTune$lambda, type ="coefficients")
-
+                        s = lasso.fit$bestTune$lambda, type="coefficients")
 # nrow(summary(coef_lasso))
 # There are 15 non-zero coefficient estimates
 
-predy2.lasso <- predict(lasso.fit$finalModel, newx = predict(trans,x2), 
-                        s = lasso.fit$bestTune$lambda, type = "response")
 # test MSE
-# mean((predy2.lasso - y2)^2)
+pred_lasso <- predict(lasso.fit, newdata = x2)
+lasso_test = mean((pred_lasso - y2)^2)
 ```
 
 
@@ -267,61 +249,44 @@ non_zero_coef = coef_lasso %>%
 ```
 
 
-```{r}
-### Least Square
-
-set.seed(3)
-
-lm.fit <- train(x1, y1,
-                method = "lm",
-                preProcess = c("center", "scale", "knnImpute"),
-                trControl = ctrl1)
-```
-
-
 ```{r PCR}
-### PCR
-
+# PCR Model
 set.seed(3)
 
 pcr.fit <- train(x1, y1,
-                     method = "pcr",
-                     tuneLength = 33,
-                   preProcess = c( "center", "scale", "knnImpute"),
-                     trControl = ctrl1)
+                 method = "pcr",
+                 tuneLength = 33,
+                 preProcess = c( "center", "scale", "knnImpute"),
+                 trControl = ctrl)
 
 
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+pcr_tuning <- ggplot(pcr.fit, highlight = TRUE)
 
 
-
-predy2.pcr = predict(pcr.fit$finalModel, newdata = predict(trans, x2), ncomp = pcr.fit$bestTune$ncomp)
 # test MSE
-# mean((predy2.pcr - y2)^2)
-
-# ggplot(pcr.fit, highlight = TRUE)+ theme_bw()
+pred_pcr = predict(pcr.fit, newdata = x2)
+pcr_test = mean((pred_pcr - y2)^2)
 ```
 
 
 ```{r pls}
-### PLS
-
+# PLS
 set.seed(3)
 
 pls.fit <- train(x1, y1,
-                     method = "pls",
-                     tuneLength = 33,
-                   preProcess = c( "center", "scale", "knnImpute"),
-                     trControl = ctrl1)
+                 method = "pls",
+                 tuneLength = 33,
+                 preProcess = c( "center", "scale", "knnImpute"),
+                 trControl = ctrl)
 
 
-trans = preProcess(x1, method = c("center", "scale", "knnImpute"))
+# summary(pls.fit)
 
+pls_tuning <- ggplot(pls.fit, highlight = TRUE)+ theme_bw()
 
-predy2.pls = predict(pls.fit$finalModel, newdata = predict(trans, x2), ncomp = pls.fit$bestTune$ncomp)
 # test MSE
-# mean((predy2.pls - y2)^2)
-# ggplot(pls.fit, highlight = TRUE)+ theme_bw()
+pred_pls = predict(pls.fit, newdata = x2)
+pls_test = mean((pred_pls - y2)^2)
 ```
 
 
@@ -334,9 +299,14 @@ gam.fit <- train(x, y,
                  method = "gam",
                  tuneLength = data.frame(method = "GCV.Cp", select = c("TRUE", "FALSE")),
                  preProcess = c( "center", "scale", "knnImpute"),
-                 trControl = ctrl1)
+                 trControl = ctrl)
 # summary(gam.fit)
+# gam.fit$bestTune
 # plot(gam.fit$finalModel, pages = 4)
+
+# test MSE
+pred_gam = predict(gam.fit, newdata = x2)
+gam_test = mean((pred_gam - y2)^2)
 ```
 
 
@@ -352,37 +322,177 @@ mars.fit <- train(x1, y1,
                  method = "earth",
                  tuneGrid = mars_grid,
                  preProcess = c("center", "scale", "knnImpute"),
-                 trControl = ctrl1)
+                 trControl = ctrl)
 
-# ggplot(mars.fit)
-
+mars_tuning <- ggplot(mars.fit)
+# summary(mars.fit)
 # mars.fit$bestTune
 
 # coef(mars.fit$finalModel)
+
+# test MSE
+pred_mars = predict(mars.fit, newdata = x2)
+# test MSE
+mars_test = mean((pred_mars - y2)^2)
+```
+
+```{r}
+### KNN
+set.seed(3)
+
+# To find the optimal tuning parameter: 
+
+# First I tried `tuneGrid = data.frame(k = seq(1,300,by = 5))`, the optimal k is 21. The cross-validation RMSE keep rising as k increases from 21 to 300 by adding increment number 5 for each time.
+
+# Then I tried `tuneGrid = data.frame(k = seq(1,50,by = 1))`, generate the sequence from 1 to 40 by adding increment number 1 for each time, the optimal k is 8
+knn.fit <- train(x1, y1,
+                 method = "knn",
+                 tuneGrid = data.frame(k = seq(1,40,by = 1)),
+                 preProcess = c( "center", "scale", "knnImpute"),
+                 trControl = ctrl)
+
+# knn.fit$bestTune
+
+knn_tuning <- ggplot(knn.fit)
+
+# test MSE
+pred.knn = predict(knn.fit, newdata = x2)
+knn_test = mean((pred.knn - y2)^2)
+```
+
+```{r}
+## Regression Tree
+set.seed(3)
+# tune over cp, method = "rpart"
+rpart.fit <- train(x1, y1, 
+                   method = "rpart",
+                   tuneGrid = data.frame(cp = exp(seq(-9,-5, length = 20))), # (-6,-4), (-9,-5)
+                   preProcess = c( "center", "scale", "knnImpute"),
+                   trControl = ctrl)
+
+rpart_tuning <- ggplot(rpart.fit, highlight = TRUE)
+# rpart.plot(rpart.fit$finalModel)
+# rpart.fit$bestTune
+
+# test MSE
+predy2.rt <- predict(rpart.fit, newdata =x2)
+rpart_test = mean((predy2.rt - y2)^2) # 0.764
+```
+
+```{r}
+## Bagging
+bag.grid <- expand.grid(mtry = 33,
+                       splitrule = "variance",
+                       min.node.size = 1:15)
+set.seed(3)
+bag.fit <- train(x1, y1, 
+                method = "ranger",
+                tuneGrid = bag.grid,
+                preProcess = c( "center", "scale", "knnImpute"),
+                trControl = ctrl)
+
+bagging_tuning <- ggplot(bag.fit, highlight = TRUE)
+
+# bag.fit$bestTune
+
+# test MSE
+predy2.bag <- predict(bag.fit, newdata =x2)
+bagging_test = mean((predy2.bag - y2)^2) # 0.605
 ```
 
 
 ```{r}
-### Table and Plots for RMSE
+## Random Forest
+rf.grid <- expand.grid(mtry = 1:33,
+                       splitrule = "variance",
+                       min.node.size = 1:15)
+set.seed(3)
+rf.fit <- train(x1, y1, 
+                method = "ranger",
+                tuneGrid = rf.grid,
+                preProcess = c( "center", "scale", "knnImpute"), 
+                importance = "impurity",
+                trControl = ctrl)
+
+rf_tuning <- ggplot(rf.fit, highlight = TRUE)
+
+# rf.fit$bestTune
+
+# barplot(sort(ranger::importance(rf.fit$finalModel), decreasing = FALSE),
+#         las = 2, horiz = TRUE, cex.names = 0.7,
+#         col = colorRampPalette(colors = c("darkred","white","darkblue"))(33))
+
+
+# test MSE
+pred_rf <- predict(rf.fit, newdata = x2)
+rf_test = mean((pred_rf - y2)^2) # 0.595
+```
+
+
+```{r}
+### Boosting
+
+### 1st attempt ###
+# gbm.grid <- expand.grid(
+#   n.trees = c(2000,2500,3000,3500,4000,4500,5000),
+#   interaction.depth = 2:10,
+#   shrinkage = c(0.001,0.003,0.005), 
+#   n.minobsinnode = 1)
+
+# gbm.fit$bestTune
+#    n.trees interaction.depth shrinkage n.minobsinnode
+#      4500                10     0.003              1
+
+gbm.grid4 <- expand.grid(  
+  n.trees = seq(4300, 5000, by = 100), # number of trees
+  interaction.depth = 8:16, # number of splits d in each tree
+  shrinkage = c(0.003, 0.004, 0.005), # learnig rate              
+  n.minobsinnode = 1) # the minimum number of obs in your node
 
 set.seed(3)
 
-resamp <- resamples(list(lasso = lasso.fit, 
+gbm.fit4 <- train(x1, y1,
+                 method = "gbm",
+                 tuneGrid = gbm.grid4, 
+                 trControl = ctrl, 
+                 preProcess = c("center", "scale", "knnImpute"),  
+                 verbose = FALSE)
+
+# gbm.fit4$bestTune
+
+gbm_tuning <- ggplot(gbm.fit4, highlight = T)
+
+# summary(gbm.fit4$finalModel, las = 2, cBars = 33, cex.names = 0.6)
+
+# test MSE
+pred.gbm4 = predict(gbm.fit4, newdata = x2)
+
+gbm_test4 = mean((pred.gbm4 - y2)^2) 
+
+```
+
+
+```{r}
+# Model comparision by cross-validation RMSE
+set.seed(3)
+
+resamp <- resamples(list(ls = ls.fit,
                          ridge = ridge.fit, 
-                         lm = lm.fit,
+                         lasso = lasso.fit, 
                          pcr = pcr.fit,
-                         pls = pls.fit,
+                         pls = pls.fit,   
                          gam = gam.fit,
-                         mars = mars.fit))
-# summary(resamp)
-# bwplot(resamp, metric = "RMSE")
+                         mars = mars.fit,
+                         knn = knn.fit,
+                         regression_tree = rpart.fit,
+                         bagging = bag.fit,
+                         random_forest = rf.fit,
+                         boosting = gbm.fit4))
+
 
 rmse.df <- resamp$values %>% 
   select(ends_with("~RMSE")) 
-```
 
-```{r }
-### Summary Table for RMSE across models
 
 table.mse <- rmse.df %>% 
   gather(key = model, value = mse) %>% 
@@ -391,15 +501,119 @@ table.mse <- rmse.df %>%
   group_by(model) %>%
   summarize(
     mean_rmse = mean(mse),
-    median_rmse = median(mse),
     variance_rmse = sd(mse)^2,
     Q1 = quantile(mse, .25),
+    median_rmse = median(mse),
     Q3 = quantile(mse, .75)
   ) 
 
-# table.mse %>% knitr::kable(digits = 4)
 ```
 
+### Table 2: Model Comparison by Cross-validation RMSE
+
+```{r}
+table.mse %>% 
+  arrange(desc(mean_rmse)) %>%
+  knitr::kable(digits = 4)
+```
+
+
+```{r}
+# Compare test MSE
+test_mse <- tibble(ls = ls_test,
+       ridge = ridge_test,
+       lasso = lasso_test,
+       pcr = pcr_test,
+       pls = pls_test,
+       gam = gam_test,
+       mars = mars_test, 
+       knn = knn_test,
+       regression_test = rpart_test,
+       bagging = bagging_test,
+       random_forest = rf_test,
+       boosting = gbm_test4
+) %>% 
+  gather(key = "model", value = "test_MSE", ls:boosting)
+```
+
+</br>
+</br>
+
+### Figure 1: Correlation Plot
+
+```{r fig.width = 15, fig.height = 15}
+data_1 = data
+
+x = model.matrix(ale ~., data_1)[,-1]
+
+corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
+```
+
+```{r}
+# unsupervised learning
+
+data = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1, -county_name) %>% 
+  select(state_abbr, everything()) %>% 
+  na.omit() %>% 
+  group_by(state_abbr) %>% 
+  summarise_all(funs(mean))
+
+state <- data.frame(state_abbr = state.abb,
+                    state_name = state.name)
+
+data = left_join(data, state, by = "state_abbr") %>% 
+  select(state_abbr, state_name, ale, everything()) %>% 
+  # state_name is factor
+  mutate(state_name = as.character(state_name)) 
+
+data$state_name[is.na(data$state_name)] <- "District of Columbia"
+
+
+dat1 <- data[,3:36]
+dat1 <- scale(dat1) # scaled
+rownames(dat1) <- data$state_name
+```
+
+```{r}
+# clustering
+hc.complete <- hclust(dist(dat1), method = "complete")
+
+clustering <- fviz_dend(hc.complete, k = 5,        
+          cex = 0.5, 
+          palette = "jco", 
+          color_labels_by_k = TRUE,
+          rect = TRUE, rect_fill = TRUE, rect_border = "jco")
+
+# ind.complete <- cutree(hc.complete, 5)
+```
+
+```{r}
+# heatmap
+
+col1 <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
+col2 <- colorRampPalette(brewer.pal(3, "Spectral"))(2)
+
+heatmap <- heatmap.2(t(dat1), 
+          col = col1, keysize=.8, key.par = list(cex=.5),
+          trace = "none", key = TRUE, cexCol = 0.75, 
+          labCol = as.character(row.names(dat1)),
+          margins = c(10, 10))
+```
+
+### Figure 2: Hierarchical Clustering at the State Level
+
+```{r}
+clustering
+```
+
+### Figure 3: Heatmap at the State Level
+
+```{r fig.width = 15, fig.height = 15}
+heatmap
+```
+
+### Figure 4: Violin Box Plot for Model Comparison by Cross-validation RMSE
 
 ```{r}
 ### Plots for RMSE across models
@@ -437,9 +651,8 @@ violin.mse <- rmse.df %>%
   geom_violin(aes(fill = model), trim = FALSE, alpha = 0.3) + 
   geom_boxplot(width = 0.25) +
   labs(
-    y = "Root Mean Sqaure Error",
-    x = "Model",
-    title = sprintf("Comparison of Model RMSE")
+    y = "Cross-validation RMSE",
+    x = "Model"
   ) +
   viridis::scale_fill_viridis(
     option = "magma",
@@ -452,33 +665,117 @@ violin.mse <- rmse.df %>%
     axis.title.y = element_text(size = 20),
     axis.title.x = element_text(size = 20),
     axis.text.x = element_text(size = 20),
-    axis.text.y = element_text(size = 20),
-    title = element_text(size = 20)
-    )
+    axis.text.y = element_text(size = 20)
+    ) +
+  coord_flip()
 
 ```
-
-
-### Figure 1: Correlation Plot
-
-```{r fig.width = 15, fig.height = 15}
-data_1 = data
-
-x = model.matrix(ale ~., data_1)[,-1]
-
-corrplot(cor(x), method = "number", number.cex = 0.5, tl.cex = 0.8)
-```
-
-### Figure 2: RMSE Predicted by the LASSO Model with Different Tuning Parameters
-
-```{r}
-plot_2
-```
-
-### Figure 3: Violin Box Plot for Model RMSE Comparison
 
 ```{r fig.width = 15, fig.height = 15}
 violin.mse
 ```
 
+### Figure 5: Partial Dependence Plot (PDP) Based on Random Forest
 
+```{r}
+# Partial Dependence Plot (PDP) for Random Forest
+
+pdp_df <- data.frame(x1, ale = y1)
+
+pdp_rf_1 <- rf.fit %>% 
+  partial(pred.var = "all_death", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Death Rate",
+       y = "Partial Dependence Function")
+
+pdp_rf_2 <- rf.fit %>%          # selected
+  partial(pred.var = "poverty", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Poverty",
+       y = "Partial Dependence Function") 
+
+pdp_rf_3 <- rf.fit %>%     # selected
+  partial(pred.var = "no_hs_diploma", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent with No High School Diploma",
+       y = "Partial Dependence Function")
+
+pdp_rf_5 <- rf.fit %>% 
+  partial(pred.var = "black", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Percent Black",
+       y = "Partial Dependence Function")
+
+pdp_rf_6 <- rf.fit %>% 
+  partial(pred.var = "health_status", 
+          grid.resolution = 100) %>%
+  autoplot(rug = TRUE, train = x1) +
+  labs(x = "Health Status",
+       y = "Partial Dependence Function")
+
+grid.arrange(pdp_rf_1, pdp_rf_2, pdp_rf_3, pdp_rf_5, pdp_rf_6, nrow = 2)
+```
+
+### Figure 6: Feature Effects in Two Different Counties Based on Random Forest
+
+```{r}
+# Plot the features in an explanation: plot_features()
+
+# remain the county_name for data
+data_county = read_csv("./data/dataset.final.csv") %>% 
+  select(-X1) 
+
+data_county_test <- data_county[-trRows, ]
+
+# Check: if there are duplicate county
+data_county_test %>% 
+  group_by(county_name) %>% 
+  count() %>% 
+  arrange(desc(n)) # some state have counties with the same name
+
+data_county_test %>% 
+  group_by(county_name, state_abbr) %>% 
+  count() %>% 
+  arrange(desc(n)) 
+
+data_county_test$county <- paste(data_county_test$county_name, data_county_test$state_abbr)
+
+data_county_test = data_county_test %>% 
+  select(-county_name, -state_abbr, -ale)
+
+# Plot
+library(lime)
+
+# select the 200th county: Guthrie in IA
+new_obs200 <- data_county_test[200, ] %>% 
+  column_to_rownames("county") # row.names(new_obs) <- new_obs$county
+# random forest
+explainer.rf200 <- lime(data.frame(x1), rf.fit) # lime(predictors, model.fit)
+explanation.rf200 <- explain(new_obs200, explainer.rf200, n_features = 8) # n_features = 8 or 5
+rf_200 = plot_features(explanation.rf200) +
+  ggtitle("Random Forest")
+
+# select the 10th county: Lamar
+new_obs10 <- data_county_test[10, ] %>% 
+  column_to_rownames("county") # row.names(new_obs) <- new_obs$county
+# random forest
+explainer.rf10 <- lime(data.frame(x1), rf.fit) # lime(predictors, model.fit)
+explanation.rf10 <- explain(new_obs10, explainer.rf10, n_features = 8) # n_features = 8 or 5
+rf_10 = plot_features(explanation.rf10) +
+  ggtitle("Random Forest")
+
+
+# grid.arrange
+grid.arrange(rf_200, rf_10, nrow = 1)
+
+# select the 10th county: Lamar
+# 10: Lamar in AL
+# 15: Montgomery in AL
+# 200: Guthrie in IA
+# 300: Clare in MI
+# 700: Fairfax in VA
+```

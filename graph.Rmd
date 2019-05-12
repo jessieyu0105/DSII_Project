@@ -29,6 +29,11 @@ library(corrplot)
 
 library(ranger)
 
+library(factoextra)
+library(gridExtra)
+library(RColorBrewer) 
+library(gplots)
+
 theme_set(theme_bw() + theme(legend.position = "bottom"))
 
 options(scipen = 200) # do not use scientific notation

@@ -1,5 +1,5 @@
 ---
-title: "boosting and knn"
+title: "Machine Learning Models and Visualization of Black Box Models"
 output: html_document
 ---
 
@@ -392,10 +392,12 @@ pdp_rf_2 <- rf.fit %>%          # selected
   labs(x = "Percent Poverty",
        y = "Partial Dependence Function") 
 
+
+
 pdp_rf_3 <- rf.fit %>%     # selected
   partial(pred.var = "no_hs_diploma", 
           grid.resolution = 100) %>%
-  autoplot(rug = TRUE, train = x1) +
+  autoplot(rug = TRUE, train = x1, aes(x*10)) +
   labs(x = "Percent with No High School Diploma",
        y = "Partial Dependence Function",
        title = "Random Forest")

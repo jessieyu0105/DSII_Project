@@ -1,7 +1,6 @@
 ---
-title: "Unsupervised"
-author: Shuwei Liu
-output: pdf_document
+title: "Unsupervised Learning"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}

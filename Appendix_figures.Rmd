@@ -76,13 +76,13 @@ data = read_csv("./data/dataset.final.csv") %>%
 |Dentist Rate                             |1    |32.19    |21.5      |18.7         |30     |43.3         |
 |Percent Poverty                          |1    |13.35    |4.88      |9.8          |12.6   |16.2         |
 |Percent Unemployed                       |543  |6.11     |1.34      |5.2          |6      |6.8          |
-|Percent Uninsured                        |0    |14.0     |3.60      |11.1         |13.2   |17.0         |
-|Percent Medicare Based on Disability     |0    |2.50     |0.79      |1.70         |2.30   |3.10         |
-|Percent Medicare Based on Elderly Status |0    |9.80     |0.8       |11.0         |14.2   |17.1         |
-|Percent with Major Depression            |0    |6.15     |0.66      |5.60         |5.90   |6.50         |
-|Percent with No High School Diploma      |0    |15.0     |5.81      |11.3         |14.0   |19.2         |
-|Percent with Recent Drug Use             |0    |5.21     |1.12      |4.55         |5.12   |5.73         |
-|Percent Severely Disabled                |0    |2.56     |0.62      |2.03         |2.70   |3.46         |
+|Percent Uninsured                        |0    |0.14     |0.36      |0.11         |0.13   |0.17         |
+|Percent Medicare Based on Disability     |0    |0.017    |0.79      |0.017        |0.023  |0.031        |
+|Percent Medicare Based on Elderly Status |0    |0.098    |0.8       |0.11         |0.14   |0.17         |
+|Percent with Major Depression            |0    |0.061    |0.0066    |0.056        |0.059  |0.065        |
+|Percent with No High School Diploma      |0    |0.15     |0.058     |0.11         |0.14   |0.19         |
+|Percent with Recent Drug Use             |0    |0.052    |0.011     |0.045        |0.051  |0.057        |
+|Percent Severely Disabled                |0    |0.025    |0.062     |0.02         |0.027  |0.034        |
 
 </br>
 </br>
